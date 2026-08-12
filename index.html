@@ -69,6 +69,19 @@
   .proj.tmpl h2,.proj.tmpl p{color:var(--faint);}
   .proj.tmpl .soon{font-family:var(--mono); font-size:12px; color:var(--faint);}
 
+  .entries{display:flex; flex-direction:column; gap:20px;}
+  .entry{padding-left:16px; border-left:2px solid var(--border);}
+  .entry .eh{display:flex; flex-wrap:wrap; gap:4px 12px; align-items:baseline;}
+  .entry .role{font-weight:700; font-size:17px; color:var(--text);}
+  .entry .when{font-family:var(--mono); font-size:12px; color:var(--faint); margin-left:auto;}
+  .entry .org{color:var(--accent); font-size:15px; font-weight:600; margin:3px 0 5px;}
+  .entry p{margin:0; color:var(--muted); font-size:15px;}
+  .cert{display:flex; flex-wrap:wrap; gap:4px 12px; align-items:baseline; padding:11px 0; border-bottom:1px solid var(--border);}
+  .cert:last-child{border-bottom:0;}
+  .cert .cn{font-weight:600; color:var(--text);}
+  .cert .ci{color:var(--muted); font-size:14px;}
+  .cert .cw{font-family:var(--mono); font-size:12px; color:var(--faint); margin-left:auto;}
+
   footer{border-top:1px solid var(--border); margin-top:36px; padding:26px 0 60px; color:var(--faint); font-size:14px;}
   footer a{color:var(--muted);}
 </style>
@@ -80,8 +93,7 @@
     <span class="mark">Quen<span>Heng</span>Lee</span>
     <nav>
       <a href="https://github.com/QuenHengLee">GitHub</a>
-      <!-- TODO: replace with your real LinkedIn URL -->
-      <a href="https://www.linkedin.com/in/quenhenglee/">LinkedIn</a>
+      <a href="https://www.linkedin.com/in/%E6%AC%8A%E6%81%92-%E6%9D%8E-83ab991b6/">LinkedIn</a>
       <span class="langtoggle" role="group" aria-label="Language">
         <button id="lg-zh" onclick="setLang('zh')">中</button>
         <button id="lg-en" onclick="setLang('en')">EN</button>
@@ -105,6 +117,30 @@
       <p class="bio">This is where I keep my projects and the write-ups behind them: what I set out to do, what went wrong, and what I learned fixing it.</p>
     </div>
   </section>
+
+  <p class="section-label"><span class="lang-zh">工作經歷</span><span class="lang-en">Experience</span></p>
+  <div class="entries">
+    <!-- TODO: fill in real roles. Copy this .entry block for each job. -->
+    <div class="entry">
+      <div class="eh"><span class="role"><span class="lang-zh">職稱</span><span class="lang-en">Role / Title</span></span><span class="when">20XX – present</span></div>
+      <div class="org"><span class="lang-zh">公司名稱</span><span class="lang-en">Company</span></div>
+      <p><span class="lang-zh">一句話說明你負責什麼、做出什麼成果。</span><span class="lang-en">A short line about what you did and what you shipped.</span></p>
+    </div>
+  </div>
+
+  <p class="section-label"><span class="lang-zh">學歷</span><span class="lang-en">Education</span></p>
+  <div class="entries">
+    <div class="entry">
+      <div class="eh"><span class="role"><span class="lang-zh">學校名稱</span><span class="lang-en">School</span></span><span class="when">20XX – 20XX</span></div>
+      <div class="org"><span class="lang-zh">科系 · 學位</span><span class="lang-en">Degree · Field</span></div>
+    </div>
+  </div>
+
+  <p class="section-label"><span class="lang-zh">證照</span><span class="lang-en">Certifications</span></p>
+  <div class="entries">
+    <!-- TODO: fill in real certs. Copy this .cert row for each one. -->
+    <div class="cert"><span class="cn"><span class="lang-zh">證照名稱</span><span class="lang-en">Certification name</span></span><span class="ci"><span class="lang-zh">發證單位</span><span class="lang-en">Issuer</span></span><span class="cw">20XX</span></div>
+  </div>
 
   <p class="section-label"><span class="lang-zh">專案</span><span class="lang-en">Projects</span></p>
   <div class="projects">
