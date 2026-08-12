@@ -4,11 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Sideloading Instagram TV in Taiwan — QuenHengLee</title>
-<script>document.documentElement.setAttribute('data-lang', localStorage.getItem('lang')||'zh');</script>
+<script>var _d=document.documentElement;_d.setAttribute('data-lang',localStorage.getItem('lang')||'zh');var _t=localStorage.getItem('theme');if(_t)_d.setAttribute('data-theme',_t);</script>
 <style>
   :root{--bg:#FBFAF9;--surface:#fff;--border:#E9E5E1;--text:#17161B;--muted:#5c5766;--faint:#938D9C;--accent:#5348E0;--code:#F2ECF5;--codet:#3a2a54;--ok:#1E874B;
     --sans:-apple-system,system-ui,"Segoe UI",Roboto,"PingFang TC","Microsoft JhengHei",sans-serif;--mono:ui-monospace,Consolas,monospace;--serif:Georgia,"PingFang TC","Microsoft JhengHei",serif;}
   @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0D0D12;--surface:#16161D;--border:#27262F;--text:#ECEAF1;--muted:#B4AFBE;--faint:#6A6577;--accent:#9A93FF;--code:#17121B;--codet:#E9C7D8;--ok:#4ED08A;}}
+  :root[data-theme="dark"]{--bg:#0D0D12;--surface:#16161D;--border:#27262F;--text:#ECEAF1;--muted:#B4AFBE;--faint:#6A6577;--accent:#9A93FF;--code:#17121B;--codet:#E9C7D8;--ok:#4ED08A;}
+  .iconbtn{border:0;background:var(--code);color:var(--text);width:32px;height:32px;border-radius:50%;font-size:14px;line-height:1;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;}
   *{box-sizing:border-box;}
   body{margin:0;background:var(--bg);color:var(--text);font-family:var(--serif);font-size:19px;line-height:1.75;-webkit-font-smoothing:antialiased;}
   .wrap{max-width:700px;margin:0 auto;padding:0 22px 60px;}
@@ -44,6 +46,7 @@
     <button id="lg-zh" onclick="setLang('zh')">中</button>
     <button id="lg-en" onclick="setLang('en')">EN</button>
   </span>
+  <button id="themebtn" class="iconbtn" onclick="toggleTheme()" aria-label="Toggle light or dark mode">🌙</button>
 </div></header>
 
 <main class="wrap">
@@ -135,6 +138,11 @@ adb install com.instagram.airwave.apk   # → Success</code></pre>
     document.documentElement.lang=(l==='zh')?'zh-Hant':'en';
   }
   setLang(localStorage.getItem('lang')||'zh');
+  function curTheme(){var t=document.documentElement.getAttribute('data-theme');return t||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');}
+  function paintThemeBtn(){var b=document.getElementById('themebtn');if(b)b.textContent=curTheme()==='dark'?'☀️':'🌙';}
+  function toggleTheme(){var n=curTheme()==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',n);try{localStorage.setItem('theme',n);}catch(e){}paintThemeBtn();}
+  paintThemeBtn();
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', paintThemeBtn);
 </script>
 </body>
 </html>

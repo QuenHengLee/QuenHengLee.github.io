@@ -7,7 +7,7 @@
 <meta name="description" content="李權恒 (Quen-Heng Lee) — backend engineer at CHT Security. Laravel APIs, full-stack dashboards, Docker + Jenkins CI/CD, with a security bent.">
 <meta name="theme-color" content="#F2F2F7" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
-<script>document.documentElement.setAttribute('data-lang', localStorage.getItem('lang')||'zh');</script>
+<script>var _d=document.documentElement;_d.setAttribute('data-lang',localStorage.getItem('lang')||'zh');var _t=localStorage.getItem('theme');if(_t)_d.setAttribute('data-theme',_t);</script>
 <style>
   :root{
     --bg:#F2F2F7; --card:#FFFFFF; --card2:#FFFFFF;
@@ -50,6 +50,7 @@
   .seg button{border:0; background:transparent; color:var(--label); font-family:var(--sans);
     font-size:13px; font-weight:600; padding:5px 13px; border-radius:7px; cursor:pointer; letter-spacing:0;}
   .seg button[aria-pressed="true"]{background:var(--card); box-shadow:0 1px 3px rgba(0,0,0,.14), 0 1px 1px rgba(0,0,0,.04);}
+  .iconbtn{border:0; background:var(--track); color:var(--label); width:32px; height:32px; border-radius:50%; font-size:14px; line-height:1; cursor:pointer; display:inline-flex; align-items:center; justify-content:center;}
   @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .seg button[aria-pressed="true"]{background:#636366;} }
   :root[data-theme="dark"] .seg button[aria-pressed="true"]{background:#636366;}
 
@@ -134,6 +135,7 @@
     <button id="lg-zh" onclick="setLang('zh')">中</button>
     <button id="lg-en" onclick="setLang('en')">EN</button>
   </span>
+  <button id="themebtn" class="iconbtn" onclick="toggleTheme()" aria-label="Toggle light or dark mode">🌙</button>
 </div></div>
 
 <main class="wrap">
@@ -282,6 +284,20 @@
     document.documentElement.lang = (l==='zh') ? 'zh-Hant' : 'en';
   }
   setLang(localStorage.getItem('lang')||'zh');
+
+  function curTheme(){
+    var t=document.documentElement.getAttribute('data-theme');
+    return t || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  }
+  function paintThemeBtn(){ var b=document.getElementById('themebtn'); if(b) b.textContent = curTheme()==='dark' ? '☀️' : '🌙'; }
+  function toggleTheme(){
+    var next = curTheme()==='dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    try{ localStorage.setItem('theme', next); }catch(e){}
+    paintThemeBtn();
+  }
+  paintThemeBtn();
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', paintThemeBtn);
 </script>
 </body>
 </html>
