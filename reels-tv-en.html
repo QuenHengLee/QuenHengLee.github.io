@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>I Built an Instagram Reels App for Google TV</title>
+<meta name="description" content="How a ~30 KB Android TV app turns your remote into a Reels controller — no private APIs, just a WebView and a lot of key-event plumbing.">
+<style>
+  body{max-width:700px;margin:0 auto;padding:24px;font-family:Georgia,"Times New Roman",serif;font-size:19px;line-height:1.7;color:#1a1a1a;background:#fff}
+  h1{font-family:-apple-system,system-ui,"Segoe UI",Roboto,sans-serif;font-size:34px;line-height:1.15;letter-spacing:-.02em}
+  h2{font-family:-apple-system,system-ui,"Segoe UI",Roboto,sans-serif;font-size:25px;margin-top:38px}
+  img{width:100%;height:auto;border-radius:8px;margin:8px 0}
+  figcaption{font-family:sans-serif;font-size:14px;color:#666;text-align:center;margin-bottom:8px}
+  pre{background:#f4f4f6;padding:14px 16px;border-radius:8px;overflow-x:auto}
+  code{font-family:ui-monospace,Consolas,monospace;font-size:15px}
+  blockquote{border-left:3px solid #ccc;margin-left:0;padding-left:16px;color:#555;font-style:italic}
+  table{border-collapse:collapse;width:100%;font-family:sans-serif;font-size:15px}
+  th,td{border-bottom:1px solid #e5e5e5;padding:8px 10px;text-align:left}
+</style>
+</head>
+<body>
+
+<p style="font-family:-apple-system,system-ui,sans-serif;font-size:14px;margin:0 0 22px"><a href="index.html" style="color:#5348e0;text-decoration:none;font-weight:600">&larr; QuenHengLee</a></p>
+
+<h1>I Built an Instagram Reels App for Google TV — Because Scrolling Reels on a Phone Wasn't Lazy Enough</h1>
+<p><em>How a ~30 KB Android TV app turns your remote into a Reels controller — no private APIs, no scraping, just a WebView and a lot of key-event plumbing.</em></p>
+
+<figure>
+<img src="img/a1.jpg" alt="The Reels feed running full-screen on a Chromecast with Google TV">
+<figcaption>The Reels feed running full-screen on a Chromecast with Google TV — remote-driven, no browser chrome.</figcaption>
+</figure>
+
+<h2>The itch</h2>
+<p>I watch a lot of Instagram Reels. What I don't love is watching them hunched over a phone. My living room has a perfectly good TV — a Chromecast with Google TV — so the obvious question was: <em>why can't I just lean back and scroll Reels with the remote?</em></p>
+<p>Instagram <em>does</em> have an official TV app now — <code>com.instagram.airwave</code>, launched February 2026 — but it's <strong>US-only</strong>. In Taiwan it doesn't even show up in the Play Store, so there's no easy way to install it. And Google TV doesn't ship a usable web browser either. Stuck outside the US, I built the thing myself, and it turned out to be a fun little exercise in making a web experience feel like a native lean-back app.</p>
+<p>The whole thing is a single <code>Activity</code> and one big injected JavaScript function. It weighs about 30 KB. Here's how it works and, more interestingly, the bugs that made it <em>actually</em> usable.</p>
+
+<h2>The core decision: wrap the web, don't reverse the API</h2>
+<p>There are two ways to build this:</p>
+<ol>
+<li><strong>Native UI + Instagram's private API.</strong> You'd reverse-engineer the mobile app's internal endpoints, replicate its request signing, and render your own feed. This is a maintenance nightmare, it violates Instagram's terms, and it gets accounts flagged the moment the signatures drift.</li>
+<li><strong>A native shell around the real Instagram web app.</strong> Load <code>instagram.com/reels</code> in a full-screen <code>WebView</code>, let Instagram's own page fetch and render everything, and just translate the TV remote into the right on-page actions.</li>
+</ol>
+<p>I went with option 2. From Instagram's servers, the app looks like a completely ordinary Chrome session — because it <em>is</em> one. No private API, no scraping. The native layer's only job is to make that web page behave like a TV app: full-screen, launcher icon, and a D-pad that does the right thing.</p>
+<blockquote><p>Personal/educational project. Not affiliated with or endorsed by Instagram or Meta. "Instagram" is a trademark of Meta Platforms, Inc.</p></blockquote>
+
+<h2>What it feels like</h2>
+<p>The app registers as a proper Google TV app — it sits on the launcher next to Netflix and YouTube:</p>
+<figure>
+<img src="img/a5.jpg" alt="The app on the Google TV launcher next to Netflix and YouTube">
+<figcaption>The app on the Google TV launcher, alongside Netflix, YouTube, Disney+, and Prime Video.</figcaption>
+</figure>
+<p>Once you're in, the remote does everything you'd expect:</p>
+<table>
+<thead><tr><th>Key</th><th>Action</th></tr></thead>
+<tbody>
+<tr><td>Up / Down</td><td>Previous / next reel</td></tr>
+<tr><td>OK (single tap)</td><td>Play / pause</td></tr>
+<tr><td>OK (double tap)</td><td>Like / unlike</td></tr>
+<tr><td>OK (long press)</td><td>Share to a friend</td></tr>
+<tr><td>Left</td><td>Save / unsave</td></tr>
+<tr><td>Right</td><td>Open comments</td></tr>
+<tr><td>Back</td><td>Close dialog → history → exit</td></tr>
+</tbody>
+</table>
+<p>Double-tap to like felt right — it's the muscle memory everyone already has from tapping the screen:</p>
+<figure>
+<img src="img/a2.jpg" alt="Double-tapping OK likes the reel; Left saves it">
+<figcaption>Double-tapping OK likes the reel (red heart); Left saves it (filled bookmark).</figcaption>
+</figure>
+
+<h2>The interesting part: making dialogs work with a remote</h2>
+<p>The naive version — load the page, forward D-pad presses to the WebView's built-in spatial navigation — falls apart the moment you hit anything interactive. Instagram's comment sheet, share sheet, and two-factor menus are modal overlays, and the WebView's spatial navigation happily lets focus <em>escape</em> the modal to the page behind it. Instagram detects the focus leaving and instantly closes the modal. Every dialog "flashed and vanished."</p>
+<p>The fix has two pieces:</p>
+<ul>
+<li>A <code>MutationObserver</code> on the page watches for a sizeable <code>[role=dialog]</code> appearing or disappearing and reports it to the native layer through a tiny JavaScript bridge.</li>
+<li>When a dialog is open, the app <em>takes over</em> the D-pad. Instead of letting the WebView move focus, it moves a blue highlight ring between the dialog's own buttons and clicks the highlighted one on OK.</li>
+</ul>
+<p>Suddenly you can pick a friend from the share sheet or scroll comments with the remote:</p>
+<figure>
+<img src="img/a3.jpg" alt="The share sheet navigable with the D-pad, blue ring on the selected friend">
+<figcaption>The share sheet, fully navigable with the D-pad — the blue ring marks the selected friend.</figcaption>
+</figure>
+<figure>
+<img src="img/a4.jpg" alt="Comments open as a modal you can scroll and like from the remote">
+<figcaption>Comments open as a modal you can scroll and like, all from the remote.</figcaption>
+</figure>
+
+<h2>Four bugs that taught me something</h2>
+<p><strong>1. The "menu opens and instantly closes" bug.</strong> On the login screen, pressing OK on Instagram's "Try another method" button made the menu flash and disappear. The culprit wasn't focus this time — it was the WebView synthesizing a <em>double</em> click for a single <code>DPAD_CENTER</code> on Instagram's &lt;div&gt;-based buttons: the first click opened the menu, the second dismissed it. The fix: on login pages, intercept OK and perform exactly one deliberate <code>.click()</code> from the native side, swallowing the synthetic pair.</p>
+<p><strong>2. Videos default to muted, and there's no touchscreen to fix it.</strong> Instagram autoplays muted. On a phone you tap the speaker; on a TV you can't. Setting <code>video.muted = false</code> didn't stick — Instagram's own state management kept re-muting. The reliable fix was to <em>click Instagram's own unmute button</em> on a short interval until it's unmuted, then stop. That flips Instagram's real state, so it stays unmuted for the session.</p>
+<p><strong>3. Input lag.</strong> After adding the observer, the remote started feeling sluggish. Instagram's Reels DOM mutates constantly, and my observer was re-scanning the whole document on every single mutation. Debouncing it to a 200 ms window, reporting only on <em>state changes</em>, and capping the expensive one-time scans brought the responsiveness back.</p>
+<p><strong>4. Reels wouldn't load on the actual TV — just a blank play button.</strong> Everything worked in the emulator, but on a real Chromecast with Google TV the reels stalled and showed no video at all. The logs pointed straight at the hardware: <code>mali_gralloc: Failed to allocate from codec_mm … Out of memory</code>. These low-end Amlogic boxes have a tiny <em>dedicated</em> video-decoder memory pool, and Instagram's desktop feed keeps several <code>&lt;video&gt;</code> elements decoding at once — more than enough to exhaust it. The fix: on a short interval, pause every video except the one centered in the viewport, so only one hardware decoder is ever active. The stalls disappeared and reels play smoothly even while scrolling.</p>
+
+<h2>Keeping it reels-only</h2>
+<ul>
+<li><strong>Stay on Reels.</strong> Tapping a username in the comments would normally navigate you to a profile — a page with terrible remote support. A small guard redirects any navigation off the allowed paths straight back to the feed.</li>
+<li><strong>Hide the clutter.</strong> The left navigation sidebar and Instagram's on-screen prev/next chevrons are hidden (the chevrons only visually — they're kept clickable so the remote's Up/Down can still trigger them).</li>
+</ul>
+
+<h2>Build &amp; install</h2>
+<pre><code>./gradlew assembleDebug
+# → app/build/outputs/apk/debug/app-debug.apk
+
+adb connect &lt;tv-ip&gt;:&lt;port&gt;
+adb install -r app-debug.apk</code></pre>
+
+<h2>Takeaways</h2>
+<p>The lesson I keep relearning: <strong>you don't always need to rebuild the thing — sometimes you just need to re-skin how you talk to it.</strong> A WebView plus a few hundred lines of key-event plumbing gave me a lean-back Reels experience that survives Instagram's redesigns, because it's driving Instagram's own UI rather than a brittle private API.</p>
+<p>It's not going on the Play Store, and it's not trying to be a product. It's a remote, a TV, and a Saturday afternoon. But now I can veg out to Reels from the couch — and honestly, that was the whole point.</p>
+<p><strong>Code:</strong> <a href="https://github.com/QuenHengLee/IGReelsTV">github.com/QuenHengLee/IGReelsTV</a></p>
+
+</body>
+</html>

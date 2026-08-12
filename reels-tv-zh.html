@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>我幫 Google TV 做了一個 Instagram Reels App</title>
+<meta name="description" content="一個約 30 KB 的 Android TV App，如何把你的遙控器變成 Reels 控制器。">
+<style>
+  body{max-width:700px;margin:0 auto;padding:24px;font-family:"PingFang TC","Microsoft JhengHei",Georgia,serif;font-size:19px;line-height:1.8;color:#1a1a1a;background:#fff}
+  h1{font-size:32px;line-height:1.2}
+  h2{font-size:24px;margin-top:38px}
+  img{width:100%;height:auto;border-radius:8px;margin:8px 0}
+  figcaption{font-size:14px;color:#666;text-align:center;margin-bottom:8px}
+  pre{background:#f4f4f6;padding:14px 16px;border-radius:8px;overflow-x:auto}
+  code{font-family:ui-monospace,Consolas,monospace;font-size:15px}
+  blockquote{border-left:3px solid #ccc;margin-left:0;padding-left:16px;color:#555}
+  table{border-collapse:collapse;width:100%;font-size:15px}
+  th,td{border-bottom:1px solid #e5e5e5;padding:8px 10px;text-align:left}
+</style>
+</head>
+<body>
+
+<p style="font-family:sans-serif;font-size:14px;margin:0 0 22px"><a href="index.html" style="color:#5348e0;text-decoration:none;font-weight:600">&larr; 回首頁</a></p>
+
+<h1>我幫 Google TV 做了一個 Instagram Reels App——因為用手機滑 Reels 還不夠懶</h1>
+<p><em>一個約 30 KB 的 Android TV App，如何把你的遙控器變成 Reels 控制器——不用私有 API、不做爬蟲，只靠一個 WebView 和大量的按鍵事件處理。</em></p>
+
+<figure>
+<img src="img/a1.jpg" alt="在 Chromecast with Google TV 上全螢幕播放的 Reels 流">
+<figcaption>在 Chromecast with Google TV 上全螢幕播放的 Reels 流——用遙控器操作、沒有瀏覽器介面。</figcaption>
+</figure>
+
+<h2>起心動念</h2>
+<p>我很常看 Instagram Reels。我不喜歡的是駝著背盯著手機看。我客廳明明有一台好好的電視——一台 Chromecast with Google TV——所以自然就想:<em>為什麼我不能靠在沙發上，用遙控器滑 Reels？</em></p>
+<p>其實 Instagram 現在<em>有</em>官方的電視版 App 了——<code>com.instagram.airwave</code>，2026 年 2 月上架——但<strong>只在美國開放</strong>。在台灣它根本不會出現在 Play 商店，也沒有簡單的管道能裝。而 Google TV 又沒有一個能用的瀏覽器。卡在美國以外的地區，我乾脆自己做了一個，結果這變成一個很有趣的小練習:如何讓一個網頁體驗，感覺像一個真正的「靠著看」的原生 App。</p>
+<p>整個東西就是一個 <code>Activity</code> 加上一個很大的注入式 JavaScript 函式，大約 30 KB。以下說明它怎麼運作，還有更有意思的——那些讓它「真正好用」的 bug。</p>
+
+<h2>核心決策:包住網頁，而不是逆向 API</h2>
+<p>有兩種做法:</p>
+<ol>
+<li><strong>原生 UI + Instagram 私有 API。</strong> 你得逆向手機 App 的內部端點、複製它的請求簽章、自己渲染整個動態。這是維護惡夢，違反 Instagram 服務條款，而且只要簽章一變，帳號馬上被標記。</li>
+<li><strong>在真正的 Instagram 網頁外面包一層原生外殼。</strong> 用全螢幕 <code>WebView</code> 載入 <code>instagram.com/reels</code>，讓 Instagram 自己的網頁去抓資料、渲染一切，我只負責把電視遙控器轉換成對應的網頁操作。</li>
+</ol>
+<p>我選了第二種。從 Instagram 伺服器的角度看，這個 App 就是一個完全普通的 Chrome 連線——因為它本來就是。沒有私有 API、沒有爬蟲。原生層唯一的工作，是讓那個網頁「表現得像一個電視 App」:全螢幕、啟動圖示，以及一個會做對事情的方向鍵。</p>
+<blockquote><p>個人／學習用途專案，與 Instagram 或 Meta 無關，亦未獲其背書。「Instagram」為 Meta Platforms, Inc. 之商標。</p></blockquote>
+
+<h2>實際體驗</h2>
+<p>這個 App 會註冊成一個正式的 Google TV App——它就出現在主畫面，跟 Netflix、YouTube 並排:</p>
+<figure>
+<img src="img/a5.jpg" alt="App 出現在 Google TV 主畫面，與 Netflix、YouTube 並列">
+<figcaption>App 出現在 Google TV 主畫面，與 Netflix、YouTube、Disney+、Prime Video 並列。</figcaption>
+</figure>
+<p>進去之後，遙控器就如你預期地包辦一切:</p>
+<table>
+<thead><tr><th>按鍵</th><th>功能</th></tr></thead>
+<tbody>
+<tr><td>上／下</td><td>上一部／下一部</td></tr>
+<tr><td>OK 單擊</td><td>播放／暫停</td></tr>
+<tr><td>OK 雙擊</td><td>讚／取消讚</td></tr>
+<tr><td>OK 長按</td><td>分享給好友</td></tr>
+<tr><td>左</td><td>收藏／取消收藏</td></tr>
+<tr><td>右</td><td>開啟留言</td></tr>
+<tr><td>返回</td><td>關閉面板 → 上一頁 → 離開</td></tr>
+</tbody>
+</table>
+<p>「雙擊按讚」感覺很對——那正是大家在手機上點兩下螢幕早就養成的肌肉記憶:</p>
+<figure>
+<img src="img/a2.jpg" alt="雙擊 OK 按讚；左鍵收藏">
+<figcaption>雙擊 OK 按讚（紅心）；左鍵收藏（填滿的書籤）。</figcaption>
+</figure>
+
+<h2>最有意思的部分:讓彈窗能用遙控器操作</h2>
+<p>最天真的版本——載入網頁、把方向鍵丟給 WebView 內建的空間導航——一碰到互動元素就崩了。Instagram 的留言面板、分享面板、兩步驟驗證選單都是彈出式浮層，而 WebView 的空間導航會很開心地把焦點<em>跳出</em>浮層、跑到後面的頁面。Instagram 偵測到焦點離開，就立刻關掉浮層。每個彈窗都「閃一下就消失」。</p>
+<p>修法有兩部分:</p>
+<ul>
+<li>一個 <code>MutationObserver</code> 監看網頁，一旦有夠大的 <code>[role=dialog]</code> 出現或消失，就透過一個小小的 JavaScript 橋接通知原生層。</li>
+<li>當有彈窗開啟時，App <em>接管</em>方向鍵。它不再讓 WebView 移動焦點，而是在彈窗自己的按鈕之間移動一個藍色選取框，OK 就按下被選中的那顆。</li>
+</ul>
+<p>於是你就能用遙控器從分享面板選好友、或捲動留言了:</p>
+<figure>
+<img src="img/a3.jpg" alt="分享面板，藍色選取框標示選中的好友">
+<figcaption>分享面板，完全可用方向鍵操作——藍色選取框標示選中的好友。</figcaption>
+</figure>
+<figure>
+<img src="img/a4.jpg" alt="留言以浮層開啟，可以用遙控器捲動、按讚">
+<figcaption>留言以浮層開啟，可以用遙控器捲動、按讚。</figcaption>
+</figure>
+
+<h2>四個教會我東西的 bug</h2>
+<p><strong>1.「選單一開就秒關」。</strong> 在登入畫面，按 OK 去點 Instagram 的「嘗試其他方式」按鈕，選單會閃一下就不見。這次的兇手不是焦點——而是 WebView 對 Instagram 那種用 &lt;div&gt; 做的按鈕，把單次的 <code>DPAD_CENTER</code> 合成了<em>兩次</em>點擊:第一次打開選單、第二次把它關掉。修法:在登入頁攔截 OK，改由原生層精準地點一次 <code>.click()</code>，並吞掉那組合成的配對事件。</p>
+<p><strong>2. 影片預設靜音，而電視沒有觸控可以解除。</strong> Instagram 自動靜音播放。手機上你點喇叭；電視上你辦不到。直接設 <code>video.muted = false</code> 沒用——Instagram 自己的狀態管理會一直把它重新靜音。可靠的修法是<em>去點 Instagram 自己的解除靜音按鈕</em>，用一個短間隔重試直到解除為止，然後停手。這會翻轉 Instagram 真正的狀態，所以整個階段都保持有聲。</p>
+<p><strong>3. 輸入延遲。</strong> 加了 observer 之後，遙控器開始變鈍。Instagram 的 Reels DOM 一直在變動，而我的 observer 在每一次變動時都重新掃描整個文件。把它節流成 200 毫秒的區間、只在<em>狀態改變</em>時回報、並把昂貴的一次性掃描限制在少數幾次之內，反應速度就回來了。</p>
+<p><strong>4. Reels 在真正的電視上載不出來——只剩一個空的播放鍵。</strong> 在模擬器上一切正常，但在真正的 Chromecast with Google TV 上，Reels 會卡住、完全沒有畫面。記錄直指硬體:<code>mali_gralloc: Failed to allocate from codec_mm … Out of memory</code>。這些低階 Amlogic 機器的影片解碼器<em>專用</em>記憶體很小，而 Instagram 的桌面版動態會同時掛著好幾部 <code>&lt;video&gt;</code> 一起解碼——足以把它塞爆。修法:用一個短間隔，暫停畫面中央那部以外的所有影片，讓同一時間只有一個硬體解碼器在運作。卡頓消失了，就算一直往下滑，Reels 也順暢播放。</p>
+
+<h2>維持純 Reels</h2>
+<ul>
+<li><strong>停在 Reels。</strong> 在留言裡點一個帳號，本來會把你帶到個人檔案——一個遙控器支援很爛的頁面。一個小小的守衛，會把任何離開允許路徑的導航直接導回動態。</li>
+<li><strong>藏掉雜訊。</strong> 左側導覽列、以及 Instagram 畫面上的上一部／下一部箭頭都被隱藏（箭頭只是視覺上藏起來——保留可點擊，這樣遙控器的上／下鍵還是能觸發它們）。</li>
+</ul>
+
+<h2>建置與安裝</h2>
+<pre><code>./gradlew assembleDebug
+# → app/build/outputs/apk/debug/app-debug.apk
+
+adb connect &lt;電視IP&gt;:&lt;埠號&gt;
+adb install -r app-debug.apk</code></pre>
+
+<h2>心得</h2>
+<p>我一再重新學到的一課:<strong>你不一定要重造那個東西——有時候你只需要重新包裝你跟它對話的方式。</strong> 一個 WebView 加上幾百行按鍵事件處理，就給了我一個「靠著看」的 Reels 體驗，而且它能撐過 Instagram 的改版——因為它驅動的是 Instagram 自己的 UI，而不是一個脆弱的私有 API。</p>
+<p>它不會上架 Play 商店，也不打算變成什麼產品。它就是一個遙控器、一台電視，和一個週六下午。但現在我可以窩在沙發上放空看 Reels——老實說，這就是重點。</p>
+<p><strong>原始碼:</strong> <a href="https://github.com/QuenHengLee/IGReelsTV">github.com/QuenHengLee/IGReelsTV</a></p>
+
+</body>
+</html>

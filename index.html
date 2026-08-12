@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QuenHengLee — Software Developer</title>
+<meta name="description" content="QuenHengLee — software developer. Projects, experiments, and the write-ups behind them.">
+<style>
+  :root{
+    --bg:#FBFAF9; --surface:#FFFFFF; --border:#E9E5E1; --text:#17161B; --muted:#615C69;
+    --faint:#938D9C; --accent:#5348E0; --accent-soft:#EEEBFB;
+    --sans:-apple-system,system-ui,"Segoe UI",Roboto,"Helvetica Neue",Arial,"PingFang TC","Microsoft JhengHei","Noto Sans TC",sans-serif;
+    --mono:ui-monospace,"SFMono-Regular","JetBrains Mono","Cascadia Code",Consolas,monospace;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --bg:#0D0D12; --surface:#16161D; --border:#27262F; --text:#ECEAF1; --muted:#9C97A8;
+      --faint:#6A6577; --accent:#9A93FF; --accent-soft:#1D1B33;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0D0D12; --surface:#16161D; --border:#27262F; --text:#ECEAF1; --muted:#9C97A8;
+    --faint:#6A6577; --accent:#9A93FF; --accent-soft:#1D1B33;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--bg); color:var(--text); font-family:var(--sans);
+    line-height:1.65; -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:720px; margin:0 auto; padding:0 22px;}
+  a{color:var(--accent); text-decoration:none;}
+  a:hover{text-decoration:underline;}
+  :focus-visible{outline:2px solid var(--accent); outline-offset:2px; border-radius:5px;}
+
+  header.top{border-bottom:1px solid var(--border);}
+  .top-in{max-width:720px; margin:0 auto; padding:16px 22px; display:flex; align-items:center; gap:16px;}
+  .mark{font-weight:700; letter-spacing:-.01em; color:var(--text);}
+  .mark span{color:var(--accent);}
+  .top nav{margin-left:auto; display:flex; gap:18px; font-size:14px; font-weight:600;}
+  .top nav a{color:var(--muted);}
+  .top nav a:hover{color:var(--text); text-decoration:none;}
+
+  .hero{padding:70px 0 26px;}
+  .hi{font-family:var(--mono); font-size:13px; letter-spacing:.02em; color:var(--accent); margin:0 0 14px;}
+  h1{font-size:clamp(33px,6vw,48px); line-height:1.04; letter-spacing:-.03em; margin:0 0 20px;}
+  .bio{font-size:19px; color:var(--muted); max-width:58ch; margin:0 0 14px;}
+  .bio strong{color:var(--text); font-weight:600;}
+
+  .section-label{font-family:var(--mono); font-size:12px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--faint); margin:50px 0 16px; padding-top:26px; border-top:1px solid var(--border);}
+
+  .projects{display:flex; flex-direction:column; gap:16px; padding-bottom:12px;}
+  .proj{padding:24px; border:1px solid var(--border); border-radius:16px; background:var(--surface);}
+  .proj h2{font-size:22px; line-height:1.2; letter-spacing:-.015em; margin:0 0 4px; color:var(--text);}
+  .proj .kicker{font-family:var(--mono); font-size:12px; color:var(--faint); margin:0 0 12px;}
+  .proj p{margin:0 0 16px; color:var(--muted); font-size:16px;}
+  .tags{display:flex; flex-wrap:wrap; gap:7px; margin-bottom:18px;}
+  .tag{font-family:var(--mono); background:var(--accent-soft); color:var(--accent); padding:3px 9px; border-radius:999px; font-size:12px; font-weight:600;}
+  .reads{border-top:1px dashed var(--border); padding-top:14px; display:flex; flex-direction:column; gap:10px;}
+  .read-row{display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; font-size:15px;}
+  .read-row .t{color:var(--text); font-weight:600;}
+  .read-row .langs{margin-left:auto; display:flex; gap:6px;}
+  .read-row .langs a{font-family:var(--mono); font-size:12px; font-weight:600; padding:3px 10px; border:1px solid var(--border); border-radius:8px; color:var(--muted);}
+  .read-row .langs a:hover{border-color:var(--accent); color:var(--accent); text-decoration:none;}
+  .links a{color:var(--accent); font-size:14px; font-weight:600; margin-right:16px;}
+
+  /* Template card for a not-yet-written project */
+  .proj.tmpl{border-style:dashed; background:transparent;}
+  .proj.tmpl h2{color:var(--faint);}
+  .proj.tmpl p{color:var(--faint);}
+  .proj.tmpl .soon{font-family:var(--mono); font-size:12px; color:var(--faint);}
+
+  footer{border-top:1px solid var(--border); margin-top:36px; padding:26px 0 60px; color:var(--faint); font-size:14px;}
+  footer a{color:var(--muted);}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-in">
+    <span class="mark">Quen<span>Heng</span>Lee</span>
+    <nav>
+      <a href="https://github.com/QuenHengLee">GitHub</a>
+      <!-- TODO: replace with your real LinkedIn URL -->
+      <a href="https://www.linkedin.com/in/quenhenglee/">LinkedIn</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="hero">
+    <p class="hi">// hello</p>
+    <h1>Hi, I'm QuenHengLee.</h1>
+    <p class="bio"><strong>Software developer.</strong> I like understanding how things work by building them — and occasionally by taking them apart until they break.</p>
+    <p class="bio">This is where I keep my projects and the write-ups behind them: what I set out to do, what went wrong, and what I learned fixing it.</p>
+  </section>
+
+  <p class="section-label">Projects</p>
+  <div class="projects">
+
+    <!-- ============ Project: IG Reels TV ============ -->
+    <article class="proj">
+      <h2>IG Reels TV</h2>
+      <p class="kicker">Android TV · Java · WebView</p>
+      <p>An Android TV app that lets you browse Instagram Reels with the remote. A WebView wrapper with D-pad navigation, in-dialog controls, auto-unmute, and a fix for a hardware video-decoder bug on cheap Chromecasts.</p>
+      <div class="tags">
+        <span class="tag">Android TV</span><span class="tag">WebView</span><span class="tag">Java</span><span class="tag">ADB</span>
+      </div>
+      <p class="links"><a href="https://github.com/QuenHengLee/IGReelsTV">Repo &rarr;</a></p>
+      <div class="reads">
+        <div class="read-row">
+          <span class="t">Building an Instagram Reels app for Google TV</span>
+          <span class="langs"><a href="reels-tv-en.html">EN</a><a href="reels-tv-zh.html">中文</a></span>
+        </div>
+        <div class="read-row">
+          <span class="t">Sideloading Instagram's "US-only" TV app in Taiwan</span>
+          <span class="langs"><a href="sideload-en.html">EN</a><a href="sideload-zh.html">中文</a></span>
+        </div>
+      </div>
+    </article>
+
+    <!-- ============ TEMPLATE: copy this block for a new project ============
+         1. Change the title, kicker (tech), description, and tags.
+         2. Update the Repo link.
+         3. Add a write-up: create docs/your-post.html and link it in a .read-row.
+         Remove the "tmpl" class once it's filled in so it looks active. -->
+    <article class="proj tmpl">
+      <h2>Your next project</h2>
+      <p class="kicker">tech · stack · here</p>
+      <p>A one-line description of what it is and why you built it. Duplicate this card in <code>docs/index.html</code> for each project.</p>
+      <p class="soon">Write-up coming soon</p>
+    </article>
+
+    <article class="proj tmpl">
+      <h2>Another project</h2>
+      <p class="kicker">tech · stack · here</p>
+      <p>Each project can link to one or more articles — in any language — under its own block.</p>
+      <p class="soon">Write-up coming soon</p>
+    </article>
+
+  </div>
+
+  <footer>
+    <p>Built with plain HTML on GitHub Pages · <a href="https://github.com/QuenHengLee">github.com/QuenHengLee</a></p>
+  </footer>
+</main>
+
+</body>
+</html>
