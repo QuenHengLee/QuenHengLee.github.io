@@ -1,10 +1,11 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-Hant">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>QuenHengLee — Software Developer</title>
 <meta name="description" content="QuenHengLee — software developer. Projects, experiments, and the write-ups behind them.">
+<script>document.documentElement.setAttribute('data-lang', localStorage.getItem('lang')||'zh');</script>
 <style>
   :root{
     --bg:#FBFAF9; --surface:#FFFFFF; --border:#E9E5E1; --text:#17161B; --muted:#615C69;
@@ -23,30 +24,33 @@
     --faint:#6A6577; --accent:#9A93FF; --accent-soft:#1D1B33;
   }
   *{box-sizing:border-box;}
-  body{margin:0; background:var(--bg); color:var(--text); font-family:var(--sans);
-    line-height:1.65; -webkit-font-smoothing:antialiased;}
+  body{margin:0; background:var(--bg); color:var(--text); font-family:var(--sans); line-height:1.65; -webkit-font-smoothing:antialiased;}
   .wrap{max-width:720px; margin:0 auto; padding:0 22px;}
   a{color:var(--accent); text-decoration:none;}
   a:hover{text-decoration:underline;}
   :focus-visible{outline:2px solid var(--accent); outline-offset:2px; border-radius:5px;}
 
+  html[data-lang="en"] .lang-zh{display:none;}
+  html[data-lang="zh"] .lang-en{display:none;}
+
   header.top{border-bottom:1px solid var(--border);}
-  .top-in{max-width:720px; margin:0 auto; padding:16px 22px; display:flex; align-items:center; gap:16px;}
+  .top-in{max-width:720px; margin:0 auto; padding:14px 22px; display:flex; align-items:center; gap:14px;}
   .mark{font-weight:700; letter-spacing:-.01em; color:var(--text);}
   .mark span{color:var(--accent);}
-  .top nav{margin-left:auto; display:flex; gap:18px; font-size:14px; font-weight:600;}
+  .top nav{margin-left:auto; display:flex; align-items:center; gap:16px; font-size:14px; font-weight:600;}
   .top nav a{color:var(--muted);}
   .top nav a:hover{color:var(--text); text-decoration:none;}
+  .langtoggle{display:inline-flex; border:1px solid var(--border); border-radius:999px; overflow:hidden;}
+  .langtoggle button{border:0; background:transparent; color:var(--muted); font-family:var(--sans); font-size:12.5px; font-weight:700; padding:5px 11px; cursor:pointer;}
+  .langtoggle button[aria-pressed="true"]{background:var(--accent); color:#fff;}
 
   .hero{padding:70px 0 26px;}
   .hi{font-family:var(--mono); font-size:13px; letter-spacing:.02em; color:var(--accent); margin:0 0 14px;}
-  h1{font-size:clamp(33px,6vw,48px); line-height:1.04; letter-spacing:-.03em; margin:0 0 20px;}
-  .bio{font-size:19px; color:var(--muted); max-width:58ch; margin:0 0 14px;}
+  h1{font-size:clamp(33px,6vw,48px); line-height:1.05; letter-spacing:-.03em; margin:0 0 20px;}
+  .bio{font-size:19px; color:var(--muted); max-width:60ch; margin:0 0 14px;}
   .bio strong{color:var(--text); font-weight:600;}
 
-  .section-label{font-family:var(--mono); font-size:12px; letter-spacing:.14em; text-transform:uppercase;
-    color:var(--faint); margin:50px 0 16px; padding-top:26px; border-top:1px solid var(--border);}
-
+  .section-label{font-family:var(--mono); font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--faint); margin:50px 0 16px; padding-top:26px; border-top:1px solid var(--border);}
   .projects{display:flex; flex-direction:column; gap:16px; padding-bottom:12px;}
   .proj{padding:24px; border:1px solid var(--border); border-radius:16px; background:var(--surface);}
   .proj h2{font-size:22px; line-height:1.2; letter-spacing:-.015em; margin:0 0 4px; color:var(--text);}
@@ -54,18 +58,15 @@
   .proj p{margin:0 0 16px; color:var(--muted); font-size:16px;}
   .tags{display:flex; flex-wrap:wrap; gap:7px; margin-bottom:18px;}
   .tag{font-family:var(--mono); background:var(--accent-soft); color:var(--accent); padding:3px 9px; border-radius:999px; font-size:12px; font-weight:600;}
-  .reads{border-top:1px dashed var(--border); padding-top:14px; display:flex; flex-direction:column; gap:10px;}
+  .links a{color:var(--accent); font-size:14px; font-weight:600; margin-right:16px;}
+  .reads{border-top:1px dashed var(--border); padding-top:14px; display:flex; flex-direction:column; gap:10px; margin-top:4px;}
   .read-row{display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; font-size:15px;}
   .read-row .t{color:var(--text); font-weight:600;}
-  .read-row .langs{margin-left:auto; display:flex; gap:6px;}
-  .read-row .langs a{font-family:var(--mono); font-size:12px; font-weight:600; padding:3px 10px; border:1px solid var(--border); border-radius:8px; color:var(--muted);}
-  .read-row .langs a:hover{border-color:var(--accent); color:var(--accent); text-decoration:none;}
-  .links a{color:var(--accent); font-size:14px; font-weight:600; margin-right:16px;}
+  .read-row a.go{margin-left:auto; font-family:var(--mono); font-size:12px; font-weight:600; padding:3px 10px; border:1px solid var(--border); border-radius:8px; color:var(--muted);}
+  .read-row a.go:hover{border-color:var(--accent); color:var(--accent); text-decoration:none;}
 
-  /* Template card for a not-yet-written project */
   .proj.tmpl{border-style:dashed; background:transparent;}
-  .proj.tmpl h2{color:var(--faint);}
-  .proj.tmpl p{color:var(--faint);}
+  .proj.tmpl h2,.proj.tmpl p{color:var(--faint);}
   .proj.tmpl .soon{font-family:var(--mono); font-size:12px; color:var(--faint);}
 
   footer{border-top:1px solid var(--border); margin-top:36px; padding:26px 0 60px; color:var(--faint); font-size:14px;}
@@ -81,67 +82,90 @@
       <a href="https://github.com/QuenHengLee">GitHub</a>
       <!-- TODO: replace with your real LinkedIn URL -->
       <a href="https://www.linkedin.com/in/quenhenglee/">LinkedIn</a>
+      <span class="langtoggle" role="group" aria-label="Language">
+        <button id="lg-zh" onclick="setLang('zh')">中</button>
+        <button id="lg-en" onclick="setLang('en')">EN</button>
+      </span>
     </nav>
   </div>
 </header>
 
 <main class="wrap">
   <section class="hero">
-    <p class="hi">// hello</p>
-    <h1>Hi, I'm QuenHengLee.</h1>
-    <p class="bio"><strong>Software developer.</strong> I like understanding how things work by building them — and occasionally by taking them apart until they break.</p>
-    <p class="bio">This is where I keep my projects and the write-ups behind them: what I set out to do, what went wrong, and what I learned fixing it.</p>
+    <div class="lang-zh">
+      <p class="hi">// 你好</p>
+      <h1>嗨，我是 QuenHengLee。</h1>
+      <p class="bio"><strong>軟體開發者。</strong>我喜歡透過「動手做」來理解事物的運作——偶爾也會把東西拆到壞掉為止。</p>
+      <p class="bio">這裡收藏我的專案，以及背後的紀錄:我想做什麼、哪裡出了錯、又是怎麼修好的。</p>
+    </div>
+    <div class="lang-en">
+      <p class="hi">// hello</p>
+      <h1>Hi, I'm QuenHengLee.</h1>
+      <p class="bio"><strong>Software developer.</strong> I like understanding how things work by building them — and occasionally by taking them apart until they break.</p>
+      <p class="bio">This is where I keep my projects and the write-ups behind them: what I set out to do, what went wrong, and what I learned fixing it.</p>
+    </div>
   </section>
 
-  <p class="section-label">Projects</p>
+  <p class="section-label"><span class="lang-zh">專案</span><span class="lang-en">Projects</span></p>
   <div class="projects">
 
     <!-- ============ Project: IG Reels TV ============ -->
     <article class="proj">
       <h2>IG Reels TV</h2>
       <p class="kicker">Android TV · Java · WebView</p>
-      <p>An Android TV app that lets you browse Instagram Reels with the remote. A WebView wrapper with D-pad navigation, in-dialog controls, auto-unmute, and a fix for a hardware video-decoder bug on cheap Chromecasts.</p>
+      <p class="lang-zh">一個 Android TV App，讓你用遙控器瀏覽 Instagram Reels。WebView 包裝、方向鍵導航、彈窗內操作、自動解除靜音，還修了廉價 Chromecast 上的硬體影片解碼器 bug。</p>
+      <p class="lang-en">An Android TV app for browsing Instagram Reels with the remote. A WebView wrapper with D-pad navigation, in-dialog controls, auto-unmute, and a fix for a hardware video-decoder bug on cheap Chromecasts.</p>
       <div class="tags">
         <span class="tag">Android TV</span><span class="tag">WebView</span><span class="tag">Java</span><span class="tag">ADB</span>
       </div>
-      <p class="links"><a href="https://github.com/QuenHengLee/IGReelsTV">Repo &rarr;</a></p>
+      <p class="links"><a href="https://github.com/QuenHengLee/IGReelsTV"><span class="lang-zh">原始碼</span><span class="lang-en">Repo</span> &rarr;</a></p>
       <div class="reads">
         <div class="read-row">
-          <span class="t">Building an Instagram Reels app for Google TV</span>
-          <span class="langs"><a href="reels-tv-en.html">EN</a><a href="reels-tv-zh.html">中文</a></span>
+          <span class="t"><span class="lang-zh">在 Google TV 上做一個 Instagram Reels App</span><span class="lang-en">Building an Instagram Reels app for Google TV</span></span>
+          <a class="go" href="reels-tv.html"><span class="lang-zh">閱讀</span><span class="lang-en">Read</span> &rarr;</a>
         </div>
         <div class="read-row">
-          <span class="t">Sideloading Instagram's "US-only" TV app in Taiwan</span>
-          <span class="langs"><a href="sideload-en.html">EN</a><a href="sideload-zh.html">中文</a></span>
+          <span class="t"><span class="lang-zh">在台灣側載官方「僅限美國」電視版</span><span class="lang-en">Sideloading Instagram's "US-only" TV app in Taiwan</span></span>
+          <a class="go" href="sideload.html"><span class="lang-zh">閱讀</span><span class="lang-en">Read</span> &rarr;</a>
         </div>
       </div>
     </article>
 
     <!-- ============ TEMPLATE: copy this block for a new project ============
-         1. Change the title, kicker (tech), description, and tags.
-         2. Update the Repo link.
-         3. Add a write-up: create docs/your-post.html and link it in a .read-row.
-         Remove the "tmpl" class once it's filled in so it looks active. -->
+         Change the title/kicker/description/tags, update the Repo link, add a
+         write-up page and link it. Remove the "tmpl" class once it's filled. -->
     <article class="proj tmpl">
-      <h2>Your next project</h2>
+      <h2 class="lang-zh">你的下一個專案</h2><h2 class="lang-en">Your next project</h2>
       <p class="kicker">tech · stack · here</p>
-      <p>A one-line description of what it is and why you built it. Duplicate this card in <code>docs/index.html</code> for each project.</p>
-      <p class="soon">Write-up coming soon</p>
+      <p class="lang-zh">用一句話說明它是什麼、為什麼做。複製這張卡片來新增專案。</p>
+      <p class="lang-en">A one-line description of what it is and why you built it. Duplicate this card for each project.</p>
+      <p class="soon"><span class="lang-zh">文章準備中</span><span class="lang-en">Write-up coming soon</span></p>
     </article>
 
     <article class="proj tmpl">
-      <h2>Another project</h2>
+      <h2 class="lang-zh">另一個專案</h2><h2 class="lang-en">Another project</h2>
       <p class="kicker">tech · stack · here</p>
-      <p>Each project can link to one or more articles — in any language — under its own block.</p>
-      <p class="soon">Write-up coming soon</p>
+      <p class="lang-zh">每個專案區塊底下都可以掛一篇或多篇文章（任何語言）。</p>
+      <p class="lang-en">Each project block can link to one or more articles, in any language.</p>
+      <p class="soon"><span class="lang-zh">文章準備中</span><span class="lang-en">Write-up coming soon</span></p>
     </article>
 
   </div>
 
   <footer>
-    <p>Built with plain HTML on GitHub Pages · <a href="https://github.com/QuenHengLee">github.com/QuenHengLee</a></p>
+    <p><span class="lang-zh">用純 HTML 架在 GitHub Pages 上</span><span class="lang-en">Built with plain HTML on GitHub Pages</span> · <a href="https://github.com/QuenHengLee">github.com/QuenHengLee</a></p>
   </footer>
 </main>
 
+<script>
+  function setLang(l){
+    document.documentElement.setAttribute('data-lang', l);
+    try{ localStorage.setItem('lang', l); }catch(e){}
+    document.getElementById('lg-zh').setAttribute('aria-pressed', l==='zh');
+    document.getElementById('lg-en').setAttribute('aria-pressed', l==='en');
+    document.documentElement.lang = (l==='zh') ? 'zh-Hant' : 'en';
+  }
+  setLang(localStorage.getItem('lang')||'zh');
+</script>
 </body>
 </html>

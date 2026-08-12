@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Building an Instagram Reels App for Google TV — QuenHengLee</title>
+<script>document.documentElement.setAttribute('data-lang', localStorage.getItem('lang')||'zh');</script>
+<style>
+  :root{--bg:#FBFAF9;--surface:#fff;--border:#E9E5E1;--text:#17161B;--muted:#5c5766;--faint:#938D9C;--accent:#5348E0;--code:#F2ECF5;--codet:#3a2a54;
+    --sans:-apple-system,system-ui,"Segoe UI",Roboto,"PingFang TC","Microsoft JhengHei",sans-serif;--mono:ui-monospace,Consolas,monospace;--serif:Georgia,"PingFang TC","Microsoft JhengHei",serif;}
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0D0D12;--surface:#16161D;--border:#27262F;--text:#ECEAF1;--muted:#B4AFBE;--faint:#6A6577;--accent:#9A93FF;--code:#17121B;--codet:#E9C7D8;}}
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--serif);font-size:19px;line-height:1.75;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:700px;margin:0 auto;padding:0 22px 60px;}
+  a{color:var(--accent);}
+  html[data-lang="en"] .lang-zh{display:none;} html[data-lang="zh"] .lang-en{display:none;}
+  header.top{border-bottom:1px solid var(--border);position:sticky;top:0;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);}
+  .top-in{max-width:700px;margin:0 auto;padding:12px 22px;display:flex;align-items:center;gap:14px;font-family:var(--sans);}
+  .back{font-size:14px;font-weight:600;color:var(--muted);text-decoration:none;}
+  .back:hover{color:var(--text);}
+  .langtoggle{margin-left:auto;display:inline-flex;border:1px solid var(--border);border-radius:999px;overflow:hidden;}
+  .langtoggle button{border:0;background:transparent;color:var(--muted);font-family:var(--sans);font-size:12.5px;font-weight:700;padding:5px 11px;cursor:pointer;}
+  .langtoggle button[aria-pressed="true"]{background:var(--accent);color:#fff;}
+  h1{font-family:var(--sans);font-size:clamp(28px,5vw,36px);line-height:1.14;letter-spacing:-.02em;margin:34px 0 10px;}
+  h2{font-family:var(--sans);font-size:24px;margin-top:38px;}
+  em.sub{color:var(--muted);font-size:18px;}
+  img{width:100%;height:auto;border-radius:10px;margin:8px 0;border:1px solid var(--border);}
+  figure{margin:30px 0;}
+  figcaption{font-family:var(--sans);font-size:13px;color:var(--faint);text-align:center;margin-top:8px;}
+  pre{background:var(--code);border:1px solid var(--border);padding:14px 16px;border-radius:10px;overflow-x:auto;}
+  code{font-family:var(--mono);font-size:15px;color:var(--codet);}
+  p code,li code{background:var(--code);padding:2px 6px;border-radius:6px;font-size:.85em;}
+  blockquote{border-left:3px solid var(--accent);margin:24px 0;padding:6px 18px;color:var(--muted);font-style:italic;background:var(--surface);border-radius:0 8px 8px 0;}
+  table{border-collapse:collapse;width:100%;font-family:var(--sans);font-size:15px;}
+  th,td{border-bottom:1px solid var(--border);padding:8px 10px;text-align:left;}
+</style>
+</head>
+<body>
+
+<header class="top"><div class="top-in">
+  <a class="back" href="index.html">&larr; QuenHengLee</a>
+  <span class="langtoggle" role="group" aria-label="Language">
+    <button id="lg-zh" onclick="setLang('zh')">中</button>
+    <button id="lg-en" onclick="setLang('en')">EN</button>
+  </span>
+</div></header>
+
+<main class="wrap">
+
+<!-- ===== 中文 ===== -->
+<div class="lang-zh">
+  <h1>我幫 Google TV 做了一個 Instagram Reels App——因為用手機滑 Reels 還不夠懶</h1>
+  <p><em class="sub">一個約 30 KB 的 Android TV App，如何把你的遙控器變成 Reels 控制器——不用私有 API、不做爬蟲，只靠一個 WebView 和大量的按鍵事件處理。</em></p>
+  <figure><img src="img/a1.jpg" alt="Reels 流"><figcaption>在 Chromecast with Google TV 上全螢幕播放的 Reels 流——用遙控器操作、沒有瀏覽器介面。</figcaption></figure>
+
+  <h2>起心動念</h2>
+  <p>我很常看 Instagram Reels。我不喜歡的是駝著背盯著手機看。我客廳明明有一台好好的電視——一台 Chromecast with Google TV——所以自然就想:為什麼我不能靠在沙發上，用遙控器滑 Reels？</p>
+  <p>其實 Instagram 現在<em>有</em>官方電視版了（<code>com.instagram.airwave</code>，2026 年 2 月），但只在美國開放，台灣的 Play 商店根本沒有。而 Google TV 又沒有能用的瀏覽器。卡在美國以外，我乾脆自己做了一個。</p>
+
+  <h2>核心決策:包住網頁，而不是逆向 API</h2>
+  <p>與其逆向 Instagram 的私有 API（維護惡夢、違反條款、帳號會被標記），我選擇用全螢幕 <code>WebView</code> 載入 <code>instagram.com/reels</code>，讓 Instagram 自己的網頁去抓資料、渲染一切，原生層只負責把遙控器轉成對應的網頁操作。從伺服器看，它就是一個普通的 Chrome 連線。</p>
+  <blockquote><p>個人／學習用途專案，與 Instagram 或 Meta 無關。「Instagram」為 Meta Platforms, Inc. 之商標。</p></blockquote>
+
+  <h2>實際體驗</h2>
+  <figure><img src="img/a5.jpg" alt="主畫面"><figcaption>App 出現在 Google TV 主畫面，與 Netflix、YouTube 並列。</figcaption></figure>
+  <table><thead><tr><th>按鍵</th><th>功能</th></tr></thead><tbody>
+  <tr><td>上／下</td><td>上一部／下一部</td></tr><tr><td>OK 單擊</td><td>播放／暫停</td></tr>
+  <tr><td>OK 雙擊</td><td>讚／取消讚</td></tr><tr><td>OK 長按</td><td>分享給好友</td></tr>
+  <tr><td>左</td><td>收藏</td></tr><tr><td>右</td><td>開啟留言</td></tr><tr><td>返回</td><td>關面板 → 上一頁 → 離開</td></tr>
+  </tbody></table>
+  <figure><img src="img/a2.jpg" alt="讚與收藏"><figcaption>雙擊 OK 按讚（紅心）；左鍵收藏（填滿的書籤）。</figcaption></figure>
+
+  <h2>最有意思的部分:讓彈窗能用遙控器操作</h2>
+  <p>Instagram 的留言、分享、兩步驟驗證選單都是彈出式浮層，而 WebView 的空間導航會把焦點跳出浮層、Instagram 偵測到就立刻關掉——每個彈窗都「閃一下就消失」。修法:用 <code>MutationObserver</code> 偵測浮層並透過 JS 橋接通知原生層,當有彈窗時 App 接管方向鍵,在框內移動藍色選取框、OK 點選。</p>
+  <figure><img src="img/a3.jpg" alt="分享面板"><figcaption>分享面板可用方向鍵操作——藍色選取框標示選中的好友。</figcaption></figure>
+  <figure><img src="img/a4.jpg" alt="留言"><figcaption>留言以浮層開啟，可以用遙控器捲動、按讚。</figcaption></figure>
+
+  <h2>四個教會我東西的 bug</h2>
+  <p><strong>1. 選單一開就秒關。</strong> WebView 對 Instagram 用 &lt;div&gt; 做的按鈕，把單次 <code>DPAD_CENTER</code> 合成兩次點擊（開了又關）。修法:登入頁攔截 OK，由原生層精準點一次。</p>
+  <p><strong>2. 影片預設靜音、電視沒觸控可解。</strong> 直接設 <code>video.muted=false</code> 會被 Instagram 蓋回去;改成去點 Instagram 自己的解除靜音鈕，它就整個階段保持有聲。</p>
+  <p><strong>3. 輸入延遲。</strong> observer 每次 DOM 變動都重掃整頁。改成節流 200ms、只在狀態改變時回報、昂貴掃描設上限，反應就回來了。</p>
+  <p><strong>4. 真正的電視上 Reels 載不出來。</strong> 記錄顯示 <code>codec_mm … Out of memory</code>——低階 Amlogic 的硬體解碼器記憶體很小，而 Instagram 同時掛好幾部影片解碼把它塞爆。修法:只讓畫面中央那部解碼、其餘暫停。卡頓消失。</p>
+
+  <h2>心得</h2>
+  <p>我一再學到的一課:<strong>你不一定要重造那個東西——有時只需要重新包裝你跟它對話的方式。</strong> 一個 WebView 加幾百行按鍵處理，就給了我一個能撐過 Instagram 改版的「靠著看」Reels 體驗。</p>
+  <p><strong>原始碼:</strong> <a href="https://github.com/QuenHengLee/IGReelsTV">github.com/QuenHengLee/IGReelsTV</a></p>
+</div>
+
+<!-- ===== English ===== -->
+<div class="lang-en">
+  <h1>I Built an Instagram Reels App for Google TV — Because Scrolling Reels on a Phone Wasn't Lazy Enough</h1>
+  <p><em class="sub">How a ~30 KB Android TV app turns your remote into a Reels controller — no private APIs, no scraping, just a WebView and a lot of key-event plumbing.</em></p>
+  <figure><img src="img/a1.jpg" alt="Reels feed"><figcaption>The Reels feed running full-screen on a Chromecast with Google TV — remote-driven, no browser chrome.</figcaption></figure>
+
+  <h2>The itch</h2>
+  <p>I watch a lot of Instagram Reels. What I don't love is watching them hunched over a phone. My living room has a perfectly good TV — a Chromecast with Google TV — so: why can't I just lean back and scroll Reels with the remote?</p>
+  <p>Instagram <em>does</em> have an official TV app now (<code>com.instagram.airwave</code>, February 2026), but it's US-only — in Taiwan it's not even in the Play Store. And Google TV doesn't ship a usable browser. Stuck outside the US, I built the thing myself.</p>
+
+  <h2>The core decision: wrap the web, don't reverse the API</h2>
+  <p>Rather than reverse-engineer Instagram's private API (a maintenance nightmare that violates the terms and gets accounts flagged), I load <code>instagram.com/reels</code> in a full-screen <code>WebView</code> and let Instagram's own page do the fetching and rendering. The native layer just translates the remote into the right on-page actions. From the servers, it looks like an ordinary Chrome session.</p>
+  <blockquote><p>Personal/educational project. Not affiliated with or endorsed by Instagram or Meta. "Instagram" is a trademark of Meta Platforms, Inc.</p></blockquote>
+
+  <h2>What it feels like</h2>
+  <figure><img src="img/a5.jpg" alt="Launcher"><figcaption>The app on the Google TV launcher, alongside Netflix, YouTube, Disney+, and Prime Video.</figcaption></figure>
+  <table><thead><tr><th>Key</th><th>Action</th></tr></thead><tbody>
+  <tr><td>Up / Down</td><td>Previous / next reel</td></tr><tr><td>OK (single)</td><td>Play / pause</td></tr>
+  <tr><td>OK (double)</td><td>Like / unlike</td></tr><tr><td>OK (long)</td><td>Share to a friend</td></tr>
+  <tr><td>Left</td><td>Save</td></tr><tr><td>Right</td><td>Open comments</td></tr><tr><td>Back</td><td>Close dialog → history → exit</td></tr>
+  </tbody></table>
+  <figure><img src="img/a2.jpg" alt="Like and save"><figcaption>Double-tapping OK likes the reel (red heart); Left saves it (filled bookmark).</figcaption></figure>
+
+  <h2>The interesting part: making dialogs work with a remote</h2>
+  <p>Instagram's comment, share, and 2FA menus are modal overlays, and the WebView's spatial navigation lets focus escape the modal — Instagram detects that and instantly closes it. Every dialog "flashed and vanished." The fix: a <code>MutationObserver</code> reports modals to the app via a JS bridge, and when one is open the app takes over the D-pad, moving a blue highlight between the dialog's buttons and clicking on OK.</p>
+  <figure><img src="img/a3.jpg" alt="Share sheet"><figcaption>The share sheet, fully navigable with the D-pad — the blue ring marks the selected friend.</figcaption></figure>
+  <figure><img src="img/a4.jpg" alt="Comments"><figcaption>Comments open as a modal you can scroll and like, all from the remote.</figcaption></figure>
+
+  <h2>Four bugs that taught me something</h2>
+  <p><strong>1. The "menu opens and instantly closes" bug.</strong> The WebView synthesized a double click for a single <code>DPAD_CENTER</code> on Instagram's &lt;div&gt; buttons (open, then dismiss). Fix: on login pages, intercept OK and do exactly one deliberate click.</p>
+  <p><strong>2. Videos default to muted, no touchscreen to fix it.</strong> Setting <code>video.muted=false</code> didn't stick; clicking Instagram's own unmute button does, and it stays unmuted for the session.</p>
+  <p><strong>3. Input lag.</strong> The observer re-scanned the whole DOM on every mutation. Debouncing to 200 ms, reporting only on state changes, and capping expensive scans fixed it.</p>
+  <p><strong>4. Reels wouldn't load on the actual TV.</strong> The logs showed <code>codec_mm … Out of memory</code> — the cheap Amlogic box has a tiny hardware-decoder pool, and Instagram keeps several videos decoding at once. Fix: keep only the centered reel decoding, pause the rest.</p>
+
+  <h2>Takeaways</h2>
+  <p>The lesson I keep relearning: <strong>you don't always need to rebuild the thing — sometimes you just need to re-skin how you talk to it.</strong> A WebView plus a few hundred lines of key-event plumbing gave me a lean-back Reels experience that survives Instagram's redesigns.</p>
+  <p><strong>Code:</strong> <a href="https://github.com/QuenHengLee/IGReelsTV">github.com/QuenHengLee/IGReelsTV</a></p>
+</div>
+
+</main>
+
+<script>
+  function setLang(l){
+    document.documentElement.setAttribute('data-lang',l);
+    try{localStorage.setItem('lang',l);}catch(e){}
+    document.getElementById('lg-zh').setAttribute('aria-pressed',l==='zh');
+    document.getElementById('lg-en').setAttribute('aria-pressed',l==='en');
+    document.documentElement.lang=(l==='zh')?'zh-Hant':'en';
+  }
+  setLang(localStorage.getItem('lang')||'zh');
+</script>
+</body>
+</html>
