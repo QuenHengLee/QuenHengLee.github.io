@@ -5,288 +5,271 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>李權恒 QuenHengLee — Backend Engineer</title>
 <meta name="description" content="李權恒 (Quen-Heng Lee) — backend engineer at CHT Security. Laravel APIs, full-stack dashboards, Docker + Jenkins CI/CD, with a security bent.">
+<meta name="theme-color" content="#F2F2F7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
 <script>document.documentElement.setAttribute('data-lang', localStorage.getItem('lang')||'zh');</script>
 <style>
   :root{
-    --bg:#FBFAF9; --surface:#FFFFFF; --border:#E9E5E1; --text:#17161B; --muted:#5C5766;
-    --faint:#938D9C; --accent:#5348E0; --accent-soft:#EEEBFB;
-    --sans:-apple-system,system-ui,"Segoe UI",Roboto,"Helvetica Neue",Arial,"PingFang TC","Microsoft JhengHei","Noto Sans TC",sans-serif;
-    --mono:ui-monospace,"SFMono-Regular","JetBrains Mono","Cascadia Code",Consolas,monospace;
+    --bg:#F2F2F7; --card:#FFFFFF; --card2:#FFFFFF;
+    --label:#1C1C1E; --label2:rgba(60,60,67,.6); --label3:rgba(60,60,67,.3);
+    --sep:rgba(60,60,67,.18); --accent:#007AFF; --accent-bg:rgba(0,122,255,.12);
+    --track:rgba(120,120,128,.16);
+    --sans:-apple-system,"SF Pro Text","SF Pro Display",system-ui,"Segoe UI",Roboto,"PingFang TC","Microsoft JhengHei","Noto Sans TC",sans-serif;
+    --mono:ui-monospace,"SF Mono","SFMono-Regular",Menlo,Consolas,monospace;
   }
   @media (prefers-color-scheme:dark){
     :root:not([data-theme="light"]){
-      --bg:#0D0D12; --surface:#16161D; --border:#27262F; --text:#ECEAF1; --muted:#B4AFBE;
-      --faint:#6A6577; --accent:#9A93FF; --accent-soft:#1D1B33;
+      --bg:#000000; --card:#1C1C1E; --card2:#2C2C2E;
+      --label:#FFFFFF; --label2:rgba(235,235,245,.6); --label3:rgba(235,235,245,.3);
+      --sep:rgba(84,84,88,.5); --accent:#0A84FF; --accent-bg:rgba(10,132,255,.18);
+      --track:rgba(120,120,128,.32);
     }
   }
   :root[data-theme="dark"]{
-    --bg:#0D0D12; --surface:#16161D; --border:#27262F; --text:#ECEAF1; --muted:#B4AFBE;
-    --faint:#6A6577; --accent:#9A93FF; --accent-soft:#1D1B33;
+    --bg:#000000; --card:#1C1C1E; --card2:#2C2C2E;
+    --label:#FFFFFF; --label2:rgba(235,235,245,.6); --label3:rgba(235,235,245,.3);
+    --sep:rgba(84,84,88,.5); --accent:#0A84FF; --accent-bg:rgba(10,132,255,.18);
+    --track:rgba(120,120,128,.32);
   }
-  *{box-sizing:border-box;}
-  body{margin:0; background:var(--bg); color:var(--text); font-family:var(--sans); line-height:1.65; -webkit-font-smoothing:antialiased;}
-  .wrap{max-width:720px; margin:0 auto; padding:0 22px;}
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  body{margin:0; background:var(--bg); color:var(--label); font-family:var(--sans);
+    font-size:17px; line-height:1.5; letter-spacing:-.01em; -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:620px; margin:0 auto; padding:0 16px 60px;}
   a{color:var(--accent); text-decoration:none;}
-  a:hover{text-decoration:underline;}
-  :focus-visible{outline:2px solid var(--accent); outline-offset:2px; border-radius:5px;}
+  :focus-visible{outline:2px solid var(--accent); outline-offset:2px; border-radius:8px;}
   html[data-lang="en"] .lang-zh{display:none;}
   html[data-lang="zh"] .lang-en{display:none;}
 
-  header.top{border-bottom:1px solid var(--border); position:sticky; top:0; z-index:5; background:color-mix(in srgb,var(--bg) 88%,transparent); backdrop-filter:blur(10px);}
-  .top-in{max-width:720px; margin:0 auto; padding:13px 22px; display:flex; align-items:center; gap:14px;}
-  .mark{font-weight:700; letter-spacing:-.01em; color:var(--text);}
-  .mark span{color:var(--accent);}
-  .top nav{margin-left:auto; display:flex; align-items:center; gap:15px; font-size:14px; font-weight:600;}
-  .top nav a{color:var(--muted);}
-  .top nav a:hover{color:var(--text); text-decoration:none;}
-  .langtoggle{display:inline-flex; border:1px solid var(--border); border-radius:999px; overflow:hidden;}
-  .langtoggle button{border:0; background:transparent; color:var(--muted); font-family:var(--sans); font-size:12.5px; font-weight:700; padding:5px 11px; cursor:pointer;}
-  .langtoggle button[aria-pressed="true"]{background:var(--accent); color:#fff;}
+  /* Nav bar (frosted) */
+  .nav{position:sticky; top:0; z-index:10; background:color-mix(in srgb,var(--bg) 80%,transparent);
+    backdrop-filter:saturate(180%) blur(20px); -webkit-backdrop-filter:saturate(180%) blur(20px);
+    border-bottom:.5px solid var(--sep);}
+  .nav-in{max-width:620px; margin:0 auto; padding:10px 16px; display:flex; align-items:center; gap:12px;}
+  .nav .name{font-weight:600; font-size:16px;}
+  .seg{margin-left:auto; display:inline-flex; background:var(--track); border-radius:9px; padding:2px;}
+  .seg button{border:0; background:transparent; color:var(--label); font-family:var(--sans);
+    font-size:13px; font-weight:600; padding:5px 13px; border-radius:7px; cursor:pointer; letter-spacing:0;}
+  .seg button[aria-pressed="true"]{background:var(--card); box-shadow:0 1px 3px rgba(0,0,0,.14), 0 1px 1px rgba(0,0,0,.04);}
+  @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .seg button[aria-pressed="true"]{background:#636366;} }
+  :root[data-theme="dark"] .seg button[aria-pressed="true"]{background:#636366;}
 
-  .hero{padding:64px 0 22px;}
-  .hi{font-family:var(--mono); font-size:13px; color:var(--accent); margin:0 0 14px;}
-  h1{font-size:clamp(32px,6vw,46px); line-height:1.05; letter-spacing:-.03em; margin:0 0 10px;}
-  .role-title{font-size:19px; font-weight:600; color:var(--text); margin:0 0 16px;}
-  .bio{font-size:18px; color:var(--muted); max-width:62ch; margin:0 0 16px;}
-  .bio strong{color:var(--text); font-weight:600;}
-  .loc{font-family:var(--mono); font-size:13px; color:var(--faint); margin:0;}
+  /* Hero — contact-card style */
+  .hero{text-align:center; padding:40px 0 26px;}
+  .avatar{width:96px; height:96px; border-radius:50%; margin:0 auto 16px;
+    background:linear-gradient(145deg,#0A84FF,#5E5CE6); color:#fff; font-size:40px; font-weight:600;
+    display:flex; align-items:center; justify-content:center; box-shadow:0 8px 24px -8px rgba(10,132,255,.6);}
+  .hero h1{font-size:30px; font-weight:700; letter-spacing:-.02em; margin:0 0 4px;}
+  .hero .role{font-size:17px; color:var(--label2); margin:0 0 4px;}
+  .hero .loc{font-size:14px; color:var(--label3); margin:0;}
 
-  .section-label{font-family:var(--mono); font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--faint); margin:46px 0 16px; padding-top:24px; border-top:1px solid var(--border);}
+  /* Grouped section */
+  .sec-h{font-size:13px; font-weight:600; letter-spacing:.02em; text-transform:uppercase; color:var(--label2);
+    margin:30px 4px 8px; padding:0 12px;}
+  .group{background:var(--card); border-radius:16px; overflow:hidden;}
+  .group + .group{margin-top:14px;}
+  .row{padding:13px 16px; position:relative;}
+  .row + .row::before{content:""; position:absolute; top:0; left:16px; right:0; height:.5px; background:var(--sep);}
+  .row .rk{font-size:16px; font-weight:600;}
+  .row .rv{color:var(--label2); font-size:15px; margin-top:2px;}
 
-  .chips{display:flex; flex-wrap:wrap; gap:8px;}
-  .chip{font-family:var(--mono); font-size:13px; background:var(--surface); border:1px solid var(--border); color:var(--muted); padding:5px 12px; border-radius:999px;}
-  .chip.key{background:var(--accent-soft); border-color:transparent; color:var(--accent); font-weight:600;}
+  /* About card */
+  .about{padding:18px; font-size:16px; color:var(--label); line-height:1.55;}
+  .about strong{font-weight:600;}
 
-  .entries{display:flex; flex-direction:column; gap:26px;}
-  .entry .org-head{display:flex; flex-wrap:wrap; gap:2px 12px; align-items:baseline; margin-bottom:10px;}
-  .entry .company{font-weight:700; font-size:18px; color:var(--text);}
-  .entry .when{font-family:var(--mono); font-size:12px; color:var(--faint); margin-left:auto;}
-  .role-block{margin:0 0 14px; padding-left:15px; border-left:2px solid var(--border);}
-  .role-block:last-child{margin-bottom:0;}
-  .role-line{color:var(--accent); font-size:15px; font-weight:600;}
-  .role-when{font-family:var(--mono); font-size:11px; color:var(--faint); font-weight:400; margin-left:8px;}
-  .bullets{margin:6px 0 0; padding-left:18px; color:var(--muted); font-size:14.5px; line-height:1.6;}
-  .bullets li{margin:3px 0;}
+  /* Skills */
+  .skills{padding:16px; display:flex; flex-wrap:wrap; gap:8px;}
+  .chip{font-size:14px; padding:7px 13px; border-radius:980px; background:var(--track); color:var(--label);}
+  .chip.key{background:var(--accent-bg); color:var(--accent); font-weight:600;}
 
-  .edu .org-head{margin-bottom:2px;}
-  .edu .degree{color:var(--accent); font-size:15px; font-weight:600;}
+  /* Experience */
+  .exp{padding:16px;}
+  .exp .co{display:flex; flex-wrap:wrap; align-items:baseline; gap:2px 10px; margin-bottom:2px;}
+  .exp .co .cn{font-size:17px; font-weight:700;}
+  .exp .co .cw{margin-left:auto; font-size:13px; color:var(--label3); font-variant-numeric:tabular-nums;}
+  .roleb{margin-top:12px;}
+  .roleb .rl{color:var(--accent); font-size:15px; font-weight:600;}
+  .roleb .rw{font-size:12px; color:var(--label3); margin-left:8px; font-variant-numeric:tabular-nums;}
+  .roleb ul{margin:6px 0 0; padding-left:18px; color:var(--label2); font-size:14.5px; line-height:1.55;}
+  .roleb li{margin:3px 0;}
 
-  .cert{display:flex; flex-wrap:wrap; gap:4px 12px; align-items:baseline; padding:12px 0; border-bottom:1px solid var(--border);}
-  .cert:last-child{border-bottom:0;}
-  .cert .cn{font-weight:600; color:var(--text); font-size:16px;}
-  .cert .ci{color:var(--muted); font-size:14px;}
+  /* Education / cert rows */
+  .erow{padding:14px 16px; position:relative;}
+  .erow + .erow::before{content:""; position:absolute; top:0; left:16px; right:0; height:.5px; background:var(--sep);}
+  .erow .t{font-size:16px; font-weight:600; display:flex; flex-wrap:wrap; align-items:baseline; gap:2px 10px;}
+  .erow .t .w{margin-left:auto; font-size:13px; color:var(--label3); font-weight:400; font-variant-numeric:tabular-nums;}
+  .erow .s{color:var(--accent); font-size:14px; margin-top:2px;}
+  .erow .s.gray{color:var(--label2);}
 
-  .projects{display:flex; flex-direction:column; gap:16px;}
-  .proj{padding:24px; border:1px solid var(--border); border-radius:16px; background:var(--surface);}
-  .proj h2{font-size:21px; line-height:1.2; letter-spacing:-.015em; margin:0 0 4px; color:var(--text);}
-  .proj .kicker{font-family:var(--mono); font-size:12px; color:var(--faint); margin:0 0 12px;}
-  .proj p{margin:0 0 16px; color:var(--muted); font-size:16px;}
-  .tags{display:flex; flex-wrap:wrap; gap:7px; margin-bottom:16px;}
-  .tag{font-family:var(--mono); background:var(--accent-soft); color:var(--accent); padding:3px 9px; border-radius:999px; font-size:12px; font-weight:600;}
-  .links a{color:var(--accent); font-size:14px; font-weight:600; margin-right:16px;}
-  .reads{border-top:1px dashed var(--border); padding-top:14px; display:flex; flex-direction:column; gap:10px; margin-top:4px;}
-  .read-row{display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; font-size:15px;}
-  .read-row .t{color:var(--text); font-weight:600;}
-  .read-row a.go{margin-left:auto; font-family:var(--mono); font-size:12px; font-weight:600; padding:3px 10px; border:1px solid var(--border); border-radius:8px; color:var(--muted);}
-  .read-row a.go:hover{border-color:var(--accent); color:var(--accent); text-decoration:none;}
-  .proj.tmpl{border-style:dashed; background:transparent;}
-  .proj.tmpl h2,.proj.tmpl p{color:var(--faint);}
-  .proj.tmpl .soon{font-family:var(--mono); font-size:12px; color:var(--faint);}
+  /* Link rows (Contacts style) */
+  .lrow{display:flex; align-items:center; gap:12px; padding:14px 16px; position:relative; color:var(--label);}
+  .lrow + .lrow::before{content:""; position:absolute; top:0; left:16px; right:0; height:.5px; background:var(--sep);}
+  .lrow .lk{font-size:16px;}
+  .lrow .lv{margin-left:auto; color:var(--label2); font-size:15px; max-width:60%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .lrow .chev{color:var(--label3); font-size:17px; margin-left:2px;}
 
-  footer{border-top:1px solid var(--border); margin-top:40px; padding:26px 0 60px; color:var(--faint); font-size:14px;}
-  footer a{color:var(--muted);}
+  /* Projects */
+  .proj{padding:18px;}
+  .proj + .proj{margin-top:14px;}
+  .proj h3{font-size:18px; font-weight:700; margin:0 0 3px;}
+  .proj .kick{font-family:var(--mono); font-size:12px; color:var(--label3); margin:0 0 10px;}
+  .proj p{margin:0 0 14px; color:var(--label2); font-size:15px;}
+  .ptags{display:flex; flex-wrap:wrap; gap:7px; margin-bottom:14px;}
+  .ptag{font-family:var(--mono); font-size:11px; background:var(--accent-bg); color:var(--accent); padding:4px 9px; border-radius:980px; font-weight:600;}
+  .reads{border-top:.5px solid var(--sep); padding-top:12px; display:flex; flex-direction:column; gap:11px;}
+  .rr{display:flex; align-items:center; gap:10px; font-size:15px;}
+  .rr .t{font-weight:600;}
+  .rr a.go{margin-left:auto; color:var(--accent); font-size:15px; font-weight:600; white-space:nowrap;}
+  .proj.tmpl h3,.proj.tmpl p{color:var(--label3);}
+  .proj.tmpl{border:1.5px dashed var(--sep); background:transparent;}
+
+  footer{text-align:center; margin-top:34px; color:var(--label3); font-size:13px;}
+  footer a{color:var(--label2);}
 </style>
 </head>
 <body>
 
-<header class="top">
-  <div class="top-in">
-    <span class="mark">Quen<span>Heng</span>Lee</span>
-    <nav>
-      <a href="mailto:haha89725@gmail.com">Email</a>
-      <a href="https://github.com/QuenHengLee">GitHub</a>
-      <a href="https://www.linkedin.com/in/%E6%AC%8A%E6%81%92-%E6%9D%8E-83ab991b6/">LinkedIn</a>
-      <span class="langtoggle" role="group" aria-label="Language">
-        <button id="lg-zh" onclick="setLang('zh')">中</button>
-        <button id="lg-en" onclick="setLang('en')">EN</button>
-      </span>
-    </nav>
-  </div>
-</header>
+<div class="nav"><div class="nav-in">
+  <span class="name">李權恒 · QuenHengLee</span>
+  <span class="seg" role="group" aria-label="Language">
+    <button id="lg-zh" onclick="setLang('zh')">中</button>
+    <button id="lg-en" onclick="setLang('en')">EN</button>
+  </span>
+</div></div>
 
 <main class="wrap">
+
   <section class="hero">
-    <div class="lang-zh">
-      <p class="hi">// 你好</p>
-      <h1>李權恒</h1>
-      <p class="role-title">後端工程師</p>
-      <p class="bio">在<strong>中華資安國際（CHT Security）</strong>擔任後端工程師,打造 Laravel API 與 Laravel + Vue 全端內部工具,並用 Docker + Jenkins 做 CI/CD 自動化部署。資訊管理碩士,對資安與滲透測試有興趣。</p>
-      <p class="loc">📍 台北・基隆都會區,台灣</p>
-    </div>
-    <div class="lang-en">
-      <p class="hi">// hello</p>
-      <h1>Quen-Heng Lee</h1>
-      <p class="role-title">Backend Engineer</p>
-      <p class="bio">Backend engineer at <strong>CHT Security</strong> — I build Laravel APIs and full-stack internal tools (Laravel + Vue), shipped with automated Docker + Jenkins CI/CD. Information-management master's, with a soft spot for security and penetration testing.</p>
-      <p class="loc">📍 Taipei–Keelung, Taiwan</p>
-    </div>
+    <div class="avatar">李</div>
+    <h1><span class="lang-zh">李權恒</span><span class="lang-en">Quen-Heng Lee</span></h1>
+    <p class="role"><span class="lang-zh">後端工程師</span><span class="lang-en">Backend Engineer</span></p>
+    <p class="loc"><span class="lang-zh">台北・基隆都會區,台灣</span><span class="lang-en">Taipei–Keelung, Taiwan</span></p>
   </section>
 
-  <p class="section-label"><span class="lang-zh">技能</span><span class="lang-en">Skills</span></p>
-  <div class="chips">
+  <!-- About -->
+  <div class="group">
+    <div class="about lang-zh">在<strong>中華資安國際（CHT Security）</strong>擔任後端工程師,打造 Laravel API 與 Laravel + Vue 全端內部工具,並用 Docker + Jenkins 做 CI/CD 自動化部署。資訊管理碩士,對資安與滲透測試有興趣。</div>
+    <div class="about lang-en"><strong>Backend engineer at CHT Security.</strong> I build Laravel APIs and full-stack internal tools (Laravel + Vue), shipped with automated Docker + Jenkins CI/CD. Information-management master's, with a soft spot for security and penetration testing.</div>
+  </div>
+
+  <!-- Skills -->
+  <p class="sec-h"><span class="lang-zh">技能</span><span class="lang-en">Skills</span></p>
+  <div class="group"><div class="skills">
     <span class="chip key">Docker</span>
     <span class="chip key">Jenkins</span>
     <span class="chip key"><span class="lang-zh">滲透測試</span><span class="lang-en">Penetration Testing</span></span>
-    <span class="chip">Laravel</span>
-    <span class="chip">Vue</span>
-    <span class="chip">Java</span>
-    <span class="chip">PHP</span>
-    <span class="chip">Python</span>
-    <span class="chip">CI/CD</span>
-    <span class="chip">MySQL</span>
-    <span class="chip">Selenium</span>
-    <span class="chip">Git</span>
-  </div>
+    <span class="chip">Laravel</span><span class="chip">Vue</span><span class="chip">Java</span><span class="chip">PHP</span>
+    <span class="chip">Python</span><span class="chip">CI/CD</span><span class="chip">MySQL</span><span class="chip">Selenium</span><span class="chip">Git</span>
+  </div></div>
 
-  <p class="section-label"><span class="lang-zh">工作經歷</span><span class="lang-en">Experience</span></p>
-  <div class="entries">
+  <!-- Experience -->
+  <p class="sec-h"><span class="lang-zh">工作經歷</span><span class="lang-en">Experience</span></p>
 
-    <div class="entry">
-      <div class="org-head">
-        <span class="company"><span class="lang-zh">中華資安國際 CHT Security</span><span class="lang-en">CHT Security</span></span>
-        <span class="when">2024.09 – Present</span>
-      </div>
-      <div class="role-block">
-        <div class="role-line"><span class="lang-zh">後端工程師</span><span class="lang-en">Backend Engineer</span></div>
-        <ul class="bullets">
-          <li><span class="lang-zh">開發與維護 Laravel 後端服務,提供行動 App 所需 API。</span><span class="lang-en">Build and maintain Laravel backend services and APIs for mobile applications.</span></li>
-          <li><span class="lang-zh">以全端（Laravel + Vue）開發與維護內部儀表板。</span><span class="lang-en">Build and maintain internal dashboards with full-stack development (Laravel + Vue).</span></li>
-          <li><span class="lang-zh">用 Docker 與 Jenkins 建置 CI/CD 流程,自動化部署。</span><span class="lang-en">Implement CI/CD pipelines with Docker and Jenkins for automated deployment.</span></li>
-        </ul>
-      </div>
+  <div class="group"><div class="exp">
+    <div class="co"><span class="cn"><span class="lang-zh">中華資安國際 CHT Security</span><span class="lang-en">CHT Security</span></span><span class="cw">2024.09 – Present</span></div>
+    <div class="roleb">
+      <span class="rl"><span class="lang-zh">後端工程師</span><span class="lang-en">Backend Engineer</span></span>
+      <ul>
+        <li><span class="lang-zh">開發與維護 Laravel 後端服務,提供行動 App 所需 API。</span><span class="lang-en">Build and maintain Laravel backend services and APIs for mobile apps.</span></li>
+        <li><span class="lang-zh">以全端（Laravel + Vue）開發與維護內部儀表板。</span><span class="lang-en">Build and maintain internal dashboards, full-stack (Laravel + Vue).</span></li>
+        <li><span class="lang-zh">用 Docker 與 Jenkins 建置 CI/CD,自動化部署。</span><span class="lang-en">Implement CI/CD pipelines with Docker and Jenkins for automated deployment.</span></li>
+      </ul>
     </div>
+  </div></div>
 
-    <div class="entry">
-      <div class="org-head">
-        <span class="company"><span class="lang-zh">台灣大哥大 Taiwan Mobile</span><span class="lang-en">Taiwan Mobile</span></span>
-        <span class="when">2023.06 – 2024.05</span>
-      </div>
-      <div class="role-block">
-        <div class="role-line"><span class="lang-zh">Java 後端實習生</span><span class="lang-en">Java Backend Intern</span></div><span class="role-when">2024.01 – 2024.05</span>
-        <ul class="bullets">
-          <li><span class="lang-zh">維護與開發 M+ 網頁版（Java 後端、JSP 前端）。</span><span class="lang-en">Maintain and develop the M+ web version — Java backend, JSP frontend.</span></li>
-          <li><span class="lang-zh">改善登入驗證密碼流程,以符合內部稽核目標。</span><span class="lang-en">Improve the login authentication password process to meet internal audit goals.</span></li>
-          <li><span class="lang-zh">以 git 與 Bitbucket 進行版本控制。</span><span class="lang-en">Version control with git and Bitbucket.</span></li>
-        </ul>
-      </div>
-      <div class="role-block">
-        <div class="role-line"><span class="lang-zh">自動化測試實習生</span><span class="lang-en">Automated QA Intern</span></div><span class="role-when">2023.06 – 2024.02</span>
-        <ul class="bullets">
-          <li><span class="lang-zh">用 Java 與 Selenium 打造 M+ 網頁版自動化測試工具,模擬點擊與 UI 操作。</span><span class="lang-en">Build an automated testing tool for the M+ web version with Java and Selenium, simulating clicks and UI interactions.</span></li>
-          <li><span class="lang-zh">大幅降低內部回歸測試的時間與人力成本。</span><span class="lang-en">Significantly reduce the time and effort of internal regression testing.</span></li>
-        </ul>
-      </div>
+  <div class="group"><div class="exp">
+    <div class="co"><span class="cn"><span class="lang-zh">台灣大哥大 Taiwan Mobile</span><span class="lang-en">Taiwan Mobile</span></span><span class="cw">2023.06 – 2024.05</span></div>
+    <div class="roleb">
+      <span class="rl"><span class="lang-zh">Java 後端實習生</span><span class="lang-en">Java Backend Intern</span></span><span class="rw">2024.01 – 2024.05</span>
+      <ul>
+        <li><span class="lang-zh">維護與開發 M+ 網頁版（Java 後端、JSP 前端）。</span><span class="lang-en">Maintain and develop the M+ web version — Java backend, JSP frontend.</span></li>
+        <li><span class="lang-zh">改善登入驗證密碼流程,符合內部稽核目標。</span><span class="lang-en">Improve the login authentication password flow to meet internal audit goals.</span></li>
+        <li><span class="lang-zh">以 git 與 Bitbucket 進行版本控制。</span><span class="lang-en">Version control with git and Bitbucket.</span></li>
+      </ul>
     </div>
-
-    <div class="entry">
-      <div class="org-head">
-        <span class="company"><span class="lang-zh">國立中央大學</span><span class="lang-en">National Central University</span></span>
-        <span class="when">2022.09 – 2024.07</span>
-      </div>
-      <div class="role-block">
-        <div class="role-line"><span class="lang-zh">網路管理員</span><span class="lang-en">Network Administrator</span></div><span class="role-when">2023.02 – 2024.07</span>
-        <ul class="bullets">
-          <li><span class="lang-zh">依系所需求開發與維護校內網站,並管理網路與硬體資源。</span><span class="lang-en">Develop and maintain department websites; manage network and hardware resources.</span></li>
-          <li><span class="lang-zh">以 Apache + MySQL 架設 Web 伺服器,用 PHP 開發系統。</span><span class="lang-en">Build the web server with Apache and MySQL; develop the system in PHP.</span></li>
-          <li><span class="lang-zh">與教育部協調並執行內部資安稽核,修補網站漏洞、提升安全性。</span><span class="lang-en">Coordinate with the Ministry of Education and run internal security audits to fix vulnerabilities and improve website security.</span></li>
-        </ul>
-      </div>
-      <div class="role-block">
-        <div class="role-line"><span class="lang-zh">教學助教</span><span class="lang-en">Teaching Assistant</span></div><span class="role-when">2023.09 – 2024.01</span>
-        <ul class="bullets">
-          <li><span class="lang-zh">系統分析與設計課程。</span><span class="lang-en">Course of System Analysis and Design.</span></li>
-        </ul>
-      </div>
-      <div class="role-block">
-        <div class="role-line"><span class="lang-zh">研究助理</span><span class="lang-en">Research Assistant</span></div><span class="role-when">2022.09 – 2023.01</span>
-        <ul class="bullets">
-          <li><span class="lang-zh">依教授需求開發 Python 網路爬蟲工具,擷取網路上的複雜資料,並整合 Power BI 做視覺化。</span><span class="lang-en">Build a Python web-scraping tool to extract complex data from the web, integrated with Power BI for visualization.</span></li>
-          <li><span class="lang-zh">產出的圖表與資料供實驗室師生撰寫論文使用。</span><span class="lang-en">The exported charts and data support the lab's students and professor in writing papers.</span></li>
-        </ul>
-      </div>
+    <div class="roleb">
+      <span class="rl"><span class="lang-zh">自動化測試實習生</span><span class="lang-en">Automated QA Intern</span></span><span class="rw">2023.06 – 2024.02</span>
+      <ul>
+        <li><span class="lang-zh">用 Java 與 Selenium 打造 M+ 自動化測試工具,模擬點擊與 UI 操作。</span><span class="lang-en">Build an automated testing tool for M+ with Java and Selenium, simulating clicks and UI interactions.</span></li>
+        <li><span class="lang-zh">大幅降低內部回歸測試的時間與人力。</span><span class="lang-en">Significantly reduce the time and effort of internal regression testing.</span></li>
+      </ul>
     </div>
+  </div></div>
 
-  </div>
-
-  <p class="section-label"><span class="lang-zh">學歷</span><span class="lang-en">Education</span></p>
-  <div class="entries">
-    <div class="entry edu">
-      <div class="org-head">
-        <span class="company"><span class="lang-zh">國立中央大學</span><span class="lang-en">National Central University</span></span>
-        <span class="when">2022.08 – 2025.06</span>
-      </div>
-      <div class="degree"><span class="lang-zh">碩士 · 資訊管理學系</span><span class="lang-en">M.S. · Information Management</span></div>
+  <div class="group"><div class="exp">
+    <div class="co"><span class="cn"><span class="lang-zh">國立中央大學</span><span class="lang-en">National Central University</span></span><span class="cw">2022.09 – 2024.07</span></div>
+    <div class="roleb">
+      <span class="rl"><span class="lang-zh">網路管理員</span><span class="lang-en">Network Administrator</span></span><span class="rw">2023.02 – 2024.07</span>
+      <ul>
+        <li><span class="lang-zh">依系所需求開發與維護校內網站,並管理網路與硬體資源。</span><span class="lang-en">Develop and maintain department websites; manage network and hardware resources.</span></li>
+        <li><span class="lang-zh">以 Apache + MySQL 架設 Web 伺服器,用 PHP 開發系統。</span><span class="lang-en">Build the web server with Apache and MySQL; develop the system in PHP.</span></li>
+        <li><span class="lang-zh">與教育部協調並執行內部資安稽核,修補漏洞、提升安全性。</span><span class="lang-en">Coordinate with the Ministry of Education and run internal security audits to fix vulnerabilities.</span></li>
+      </ul>
     </div>
-    <div class="entry edu">
-      <div class="org-head">
-        <span class="company"><span class="lang-zh">國立嘉義大學</span><span class="lang-en">National Chiayi University</span></span>
-        <span class="when">2018.09 – 2022.06</span>
-      </div>
-      <div class="degree"><span class="lang-zh">學士 · 資訊管理學系</span><span class="lang-en">B.B.A. · Information Management</span></div>
+    <div class="roleb">
+      <span class="rl"><span class="lang-zh">教學助教</span><span class="lang-en">Teaching Assistant</span></span><span class="rw">2023.09 – 2024.01</span>
+      <ul><li><span class="lang-zh">系統分析與設計課程。</span><span class="lang-en">Course of System Analysis and Design.</span></li></ul>
+    </div>
+    <div class="roleb">
+      <span class="rl"><span class="lang-zh">研究助理</span><span class="lang-en">Research Assistant</span></span><span class="rw">2022.09 – 2023.01</span>
+      <ul>
+        <li><span class="lang-zh">依教授需求開發 Python 網路爬蟲擷取複雜資料,整合 Power BI 視覺化。</span><span class="lang-en">Build a Python web-scraping tool to extract complex data, integrated with Power BI for visualization.</span></li>
+        <li><span class="lang-zh">產出的圖表與資料供實驗室師生撰寫論文使用。</span><span class="lang-en">The charts and data support the lab's students and professor in writing papers.</span></li>
+      </ul>
+    </div>
+  </div></div>
+
+  <!-- Education -->
+  <p class="sec-h"><span class="lang-zh">學歷</span><span class="lang-en">Education</span></p>
+  <div class="group">
+    <div class="erow">
+      <div class="t"><span><span class="lang-zh">國立中央大學</span><span class="lang-en">National Central University</span></span><span class="w">2022.08 – 2025.06</span></div>
+      <div class="s gray"><span class="lang-zh">碩士 · 資訊管理學系</span><span class="lang-en">M.S. · Information Management</span></div>
+    </div>
+    <div class="erow">
+      <div class="t"><span><span class="lang-zh">國立嘉義大學</span><span class="lang-en">National Chiayi University</span></span><span class="w">2018.09 – 2022.06</span></div>
+      <div class="s gray"><span class="lang-zh">學士 · 資訊管理學系</span><span class="lang-en">B.B.A. · Information Management</span></div>
     </div>
   </div>
 
-  <p class="section-label"><span class="lang-zh">證照與榮譽</span><span class="lang-en">Certifications &amp; Honors</span></p>
-  <div class="entries">
-    <div class="cert">
-      <span class="cn">Certified Ethical Hacker (CEH)</span>
-      <span class="ci">EC-Council</span>
-    </div>
-    <div class="cert">
-      <span class="cn"><span class="lang-zh">多益 TOEIC 850</span><span class="lang-en">TOEIC 850</span></span>
-      <span class="ci">ETS</span>
-    </div>
-    <div class="cert">
-      <span class="cn"><span class="lang-zh">IJERD 國際期刊入選證明</span><span class="lang-en">IJERD international journal paper acceptance</span></span>
-      <span class="ci">IJERD</span>
-    </div>
+  <!-- Certifications -->
+  <p class="sec-h"><span class="lang-zh">證照與榮譽</span><span class="lang-en">Certifications &amp; Honors</span></p>
+  <div class="group">
+    <div class="erow"><div class="t"><span>Certified Ethical Hacker (CEH)</span></div><div class="s gray">EC-Council</div></div>
+    <div class="erow"><div class="t"><span><span class="lang-zh">多益 TOEIC 850</span><span class="lang-en">TOEIC 850</span></span></div><div class="s gray">ETS</div></div>
+    <div class="erow"><div class="t"><span><span class="lang-zh">IJERD 國際期刊入選證明</span><span class="lang-en">IJERD international journal paper acceptance</span></span></div><div class="s gray">IJERD</div></div>
   </div>
 
-  <p class="section-label"><span class="lang-zh">專案</span><span class="lang-en">Projects</span></p>
-  <div class="projects">
+  <!-- Projects -->
+  <p class="sec-h"><span class="lang-zh">專案</span><span class="lang-en">Projects</span></p>
+  <div class="group proj">
+    <h3>IG Reels TV</h3>
+    <p class="kick">Android TV · Java · WebView</p>
+    <p class="lang-zh">一個 Android TV App，讓你用遙控器瀏覽 Instagram Reels。WebView 包裝、方向鍵導航、彈窗內操作、自動解除靜音，還修了廉價 Chromecast 上的硬體影片解碼器 bug。</p>
+    <p class="lang-en">An Android TV app for browsing Instagram Reels with the remote — a WebView wrapper with D-pad navigation, in-dialog controls, auto-unmute, and a fix for a hardware video-decoder bug on cheap Chromecasts.</p>
+    <div class="ptags"><span class="ptag">Android TV</span><span class="ptag">WebView</span><span class="ptag">Java</span><span class="ptag">ADB</span></div>
+    <p style="margin:0 0 14px"><a href="https://github.com/QuenHengLee/IGReelsTV"><span class="lang-zh">原始碼</span><span class="lang-en">Repo</span> &rarr;</a></p>
+    <div class="reads">
+      <div class="rr"><span class="t"><span class="lang-zh">在 Google TV 上做一個 Instagram Reels App</span><span class="lang-en">Building an Instagram Reels app for Google TV</span></span><a class="go" href="reels-tv.html"><span class="lang-zh">閱讀</span><span class="lang-en">Read</span> &rsaquo;</a></div>
+      <div class="rr"><span class="t"><span class="lang-zh">在台灣側載官方「僅限美國」電視版</span><span class="lang-en">Sideloading Instagram's "US-only" TV app in Taiwan</span></span><a class="go" href="sideload.html"><span class="lang-zh">閱讀</span><span class="lang-en">Read</span> &rsaquo;</a></div>
+    </div>
+  </div>
+  <div class="group proj tmpl" style="margin-top:14px">
+    <h3 class="lang-zh">你的下一個專案</h3><h3 class="lang-en">Your next project</h3>
+    <p class="kick">tech · stack · here</p>
+    <p class="lang-zh">複製這張卡片來新增專案(拿掉 tmpl class 就變成正式卡片)。</p>
+    <p class="lang-en">Duplicate this card for a new project (remove the tmpl class once filled).</p>
+  </div>
 
-    <article class="proj">
-      <h2>IG Reels TV</h2>
-      <p class="kicker">Android TV · Java · WebView</p>
-      <p class="lang-zh">一個 Android TV App，讓你用遙控器瀏覽 Instagram Reels。WebView 包裝、方向鍵導航、彈窗內操作、自動解除靜音，還修了廉價 Chromecast 上的硬體影片解碼器 bug。</p>
-      <p class="lang-en">An Android TV app for browsing Instagram Reels with the remote. A WebView wrapper with D-pad navigation, in-dialog controls, auto-unmute, and a fix for a hardware video-decoder bug on cheap Chromecasts.</p>
-      <div class="tags"><span class="tag">Android TV</span><span class="tag">WebView</span><span class="tag">Java</span><span class="tag">ADB</span></div>
-      <p class="links"><a href="https://github.com/QuenHengLee/IGReelsTV"><span class="lang-zh">原始碼</span><span class="lang-en">Repo</span> &rarr;</a></p>
-      <div class="reads">
-        <div class="read-row">
-          <span class="t"><span class="lang-zh">在 Google TV 上做一個 Instagram Reels App</span><span class="lang-en">Building an Instagram Reels app for Google TV</span></span>
-          <a class="go" href="reels-tv.html"><span class="lang-zh">閱讀</span><span class="lang-en">Read</span> &rarr;</a>
-        </div>
-        <div class="read-row">
-          <span class="t"><span class="lang-zh">在台灣側載官方「僅限美國」電視版</span><span class="lang-en">Sideloading Instagram's "US-only" TV app in Taiwan</span></span>
-          <a class="go" href="sideload.html"><span class="lang-zh">閱讀</span><span class="lang-en">Read</span> &rarr;</a>
-        </div>
-      </div>
-    </article>
-
-    <!-- TEMPLATE: copy for a new project; remove the "tmpl" class once filled. -->
-    <article class="proj tmpl">
-      <h2 class="lang-zh">你的下一個專案</h2><h2 class="lang-en">Your next project</h2>
-      <p class="kicker">tech · stack · here</p>
-      <p class="lang-zh">用一句話說明它是什麼、為什麼做。複製這張卡片來新增專案。</p>
-      <p class="lang-en">A one-line description of what it is and why you built it. Duplicate this card for each project.</p>
-      <p class="soon"><span class="lang-zh">文章準備中</span><span class="lang-en">Write-up coming soon</span></p>
-    </article>
-
+  <!-- Links -->
+  <p class="sec-h"><span class="lang-zh">聯絡</span><span class="lang-en">Links</span></p>
+  <div class="group">
+    <a class="lrow" href="mailto:haha89725@gmail.com"><span class="lk">Email</span><span class="lv">haha89725@gmail.com</span><span class="chev">&rsaquo;</span></a>
+    <a class="lrow" href="https://github.com/QuenHengLee"><span class="lk">GitHub</span><span class="lv">@QuenHengLee</span><span class="chev">&rsaquo;</span></a>
+    <a class="lrow" href="https://www.linkedin.com/in/%E6%AC%8A%E6%81%92-%E6%9D%8E-83ab991b6/"><span class="lk">LinkedIn</span><span class="lv">李權恒</span><span class="chev">&rsaquo;</span></a>
   </div>
 
   <footer>
-    <p><span class="lang-zh">用純 HTML 架在 GitHub Pages 上</span><span class="lang-en">Built with plain HTML on GitHub Pages</span> · <a href="https://github.com/QuenHengLee">github.com/QuenHengLee</a></p>
+    <p><span class="lang-zh">用純 HTML 架在 GitHub Pages</span><span class="lang-en">Built with plain HTML on GitHub Pages</span></p>
   </footer>
 </main>
 
