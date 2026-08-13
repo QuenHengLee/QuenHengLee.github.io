@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Instagram 電視版「僅限美國」——我在台灣側載，結果完全能用</title>
+<style>body{max-width:680px;margin:2rem auto;padding:0 1rem;font-family:Georgia,"PingFang TC","Microsoft JhengHei",serif;line-height:1.75;color:#222;}img{max-width:100%;height:auto;}pre{background:#f4f4f4;padding:1em;overflow-x:auto;}figure{margin:2em 0;}figcaption{font-size:.85em;color:#666;text-align:center;}blockquote{border-left:3px solid #999;margin-left:0;padding-left:1em;color:#555;}</style>
+</head>
+<body>
+<article>
+
+<h1>Instagram 電視版「僅限美國」——我在台灣側載，結果完全能用</h1>
+
+<p><em>一個 20 分鐘的實驗：那個地區限制，是真的技術封鎖，還是只是 Play 商店的一個標籤？</em></p>
+
+<p>2026 年 2 月，Instagram 推出了官方的 Google TV App（com.instagram.airwave），但只在美國開放，台灣連 Play 商店都沒有。但「Play 商店沒有」跟「不能用」是兩回事。想知道只有一個辦法：側載它，試試看。</p>
+<blockquote><p>個人、學習性質的好奇。側載第三方 APK 有其風險，請自行斟酌。</p></blockquote>
+
+<h2>步驟 1 — 選對 APK</h2>
+<p>從 APKMirror 抓。真正重要的細節只有一個：<strong>對準裝置的 CPU 架構</strong>。我那台 2020 年的 Chromecast 是 <strong>32 位元</strong>，只有 armeabi-v7a 裝得起來，arm64 版會 INSTALL_FAILED_NO_MATCHING_ABIS。先查：</p>
+<pre><code>adb shell getprop ro.product.cpu.abilist
+# → armeabi-v7a,armeabi</code></pre>
+
+<h2>步驟 2 — 用 ADB 安裝</h2>
+<pre><code>adb connect &lt;電視IP&gt;:&lt;埠號&gt;
+adb install com.instagram.airwave.apk   # → Success</code></pre>
+<p>乾淨裝好，安裝階段沒有任何地區檢查。</p>
+
+<h2>步驟 3 — 啟動：沒有地區牆</h2>
+<p>關鍵時刻。它沒跳「你的地區無法使用」，而是直接進登入畫面。</p>
+<figure><img src="https://quenhenglee.github.io/img/b1.jpg" alt="登入畫面"><figcaption>在台灣啟動——官方 App 正常打開登入畫面，沒有地區牆。</figcaption></figure>
+
+<h2>步驟 4 — 用代碼登入，不是密碼</h2>
+<p>電視上沒有密碼欄。跟 YouTube 電視登入一樣是 QR / 啟動碼流程：掃 QR，或到 instagram.com/activate 輸入短碼，由手機上已登入的帳號完成驗證。</p>
+<figure><img src="https://quenhenglee.github.io/img/b2.jpg" alt="QR 與啟動碼"><figcaption>兩種登入方式：掃 QR，或在 instagram.com/activate 輸入啟動碼。</figcaption></figure>
+
+<h2>結果：完全能用</h2>
+<p>手機授權後，電視載入了完整的原生 App——限時動態列、「For you」Reels 推薦格、有真實觀看數的內容。前端後端，零地區阻礙。</p>
+<figure><img src="https://quenhenglee.github.io/img/b3.jpg" alt="運作中的動態"><figcaption>官方 Instagram 電視版動態，在台灣運作中——限動、「For you」Reels 格、真實內容。</figcaption></figure>
+<p><strong>結論：</strong>「僅限美國」是 Play 商店的<em>上架</em>限制，不是技術地區封鎖。側載 + 真帳號授權，在美國以外一樣能用完整官方版。</p>
+
+<h2>但也有代價</h2>
+<ul>
+<li>側載門檻高，一般人看到「無法使用」就停手。</li>
+<li>沒有自動更新，要更新得重新側載。</li>
+<li>今天只是上架限制，明天可能變成真的檢查。</li>
+</ul>
+<p>老實說？這正是為什麼我早就替同一台電視做了一個 <a href="https://quenhenglee.github.io/reels-tv.html">WebView 包裝的 Reels App</a>——在這實驗前，「僅限美國」感覺像一道牆，結果只是一道矮籬。</p>
+
+<h2>附帶一課：先檢查最無聊的那件事</h2>
+<p>過程中一半的「壞了！全黑！」恐慌，其實只是 Chromecast 顯示<em>睡著了</em>（mWakefulness=Asleep）。一行 adb shell input keyevent KEYCODE_WAKEUP 就好。</p>
+
+<p><em>原文發表於 <a href="https://quenhenglee.github.io/sideload.html">quenhenglee.github.io</a></em></p>
+
+</article>
+</body>
+</html>

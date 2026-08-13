@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Instagram's TV App Is "US-Only." I Sideloaded It in Taiwan — and It Just Works.</title>
+<style>body{max-width:680px;margin:2rem auto;padding:0 1rem;font-family:Georgia,serif;line-height:1.75;color:#222;}img{max-width:100%;height:auto;}pre{background:#f4f4f4;padding:1em;overflow-x:auto;}figure{margin:2em 0;}figcaption{font-size:.85em;color:#666;text-align:center;}blockquote{border-left:3px solid #999;margin-left:0;padding-left:1em;color:#555;}</style>
+</head>
+<body>
+<article>
+
+<h1>Instagram's TV App Is "US-Only." I Sideloaded It in Taiwan — and It Just Works.</h1>
+
+<p><em>A 20-minute experiment to find out whether the region lock is a real geo-block, or just a Play Store label.</em></p>
+
+<p>In February 2026, Instagram shipped an official Google TV app (com.instagram.airwave), but it's US-only — in Taiwan it's not even in the Play Store. But "not in the Play Store" and "won't work" are two different claims. One way to find out: sideload it and see.</p>
+<blockquote><p>Personal, educational curiosity. Sideloading third-party APKs carries its own risks — do it at your own discretion.</p></blockquote>
+
+<h2>Step 1 — Pick the right APK</h2>
+<p>From APKMirror. The one detail that matters: <strong>match your device's CPU architecture</strong>. My 2020 Chromecast is <strong>32-bit</strong>, so only armeabi-v7a installs; the arm64 build fails with INSTALL_FAILED_NO_MATCHING_ABIS. Check first:</p>
+<pre><code>adb shell getprop ro.product.cpu.abilist
+# → armeabi-v7a,armeabi</code></pre>
+
+<h2>Step 2 — Install over ADB</h2>
+<pre><code>adb connect &lt;tv-ip&gt;:&lt;port&gt;
+adb install com.instagram.airwave.apk   # → Success</code></pre>
+<p>Installed cleanly. No region check at install time.</p>
+
+<h2>Step 3 — Launch: no region wall</h2>
+<p>The moment of truth. Instead of "not available in your country," it went straight to the login screen.</p>
+<figure><img src="https://quenhenglee.github.io/img/b1.jpg" alt="Login screen"><figcaption>Launched in Taiwan — the official app opens to its normal login screen, no geo-wall.</figcaption></figure>
+
+<h2>Step 4 — Log in with a code, not a password</h2>
+<p>There's no password field on the TV. Like YouTube's TV login, it's a QR / device-activation flow: scan the QR, or enter the short code at instagram.com/activate. Your already-logged-in phone does the authentication.</p>
+<figure><img src="https://quenhenglee.github.io/img/b2.jpg" alt="QR and code"><figcaption>Two ways in: scan the QR, or enter the activation code at instagram.com/activate.</figcaption></figure>
+
+<h2>The result: it fully works</h2>
+<p>After approving on the phone, the TV loaded the complete native app — a stories row, a "For you" grid of Reels, real content with real view counts. Zero region friction, front or back end.</p>
+<figure><img src="https://quenhenglee.github.io/img/b3.jpg" alt="Working feed"><figcaption>The official Instagram TV feed, running in Taiwan — stories, a "For you" Reels grid, real content.</figcaption></figure>
+<p><strong>Verdict:</strong> "US-only" is a Play Store <em>listing</em> restriction, not a technical geo-block. Sideload the APK, activate with a real account, and you get the full official experience outside the US.</p>
+
+<h2>The fine print</h2>
+<ul>
+<li>Sideloading isn't for everyone — most people just see "not available" and stop.</li>
+<li>No auto-updates: off the Play Store, you update by re-sideloading.</li>
+<li>It could change: a listing restriction today could become a real check tomorrow.</li>
+</ul>
+<p>And honestly? This is exactly why I'd already built a scrappy <a href="https://quenhenglee.github.io/reels-tv.html">WebView-wrapper Reels app</a> for the same TV — before this experiment, "US-only" felt like a wall. Turns out it was a low fence.</p>
+
+<h2>Bonus: check the boring thing first</h2>
+<p>Half of my "it's broken, the screen is black!" panics were just the Chromecast's display being <em>asleep</em> (mWakefulness=Asleep). One adb shell input keyevent KEYCODE_WAKEUP and everything was fine.</p>
+
+<p><em>Originally published at <a href="https://quenhenglee.github.io/sideload.html">quenhenglee.github.io</a></em></p>
+
+</article>
+</body>
+</html>

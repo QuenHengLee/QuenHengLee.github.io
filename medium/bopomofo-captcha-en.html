@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>I Built a CAPTCHA That Uses Taiwan's Bopomofo Alphabet — Bots Can't Read It, Taiwanese Users Type It Instantly</title>
+<style>body{max-width:680px;margin:2rem auto;padding:0 1rem;font-family:Georgia,serif;line-height:1.75;color:#222;}img{max-width:100%;height:auto;}pre{background:#f4f4f4;padding:1em;overflow-x:auto;}figure{margin:2em 0;}figcaption{font-size:.85em;color:#666;text-align:center;}blockquote{border-left:3px solid #999;margin-left:0;padding-left:1em;color:#555;}</style>
+</head>
+<body>
+<article>
+
+<h1>I Built a CAPTCHA That Uses Taiwan's Bopomofo Alphabet — Bots Can't Read It, Taiwanese Users Type It Instantly</h1>
+
+<p><em>Swapping the alphanumerics in a CAPTCHA for ㄅㄆㄇㄈ: less familiar to OCR bots, zero friction for anyone with a Zhuyin keyboard. Published as hengineer/bopomofo-captcha for Laravel, MIT-licensed.</em></p>
+
+<figure><img src="https://quenhenglee.github.io/bopomofo-captcha/images/sample1.png" alt="Bopomofo captcha sample 1"><figcaption>A generated Bopomofo captcha — random size, color, rotation, plus noise lines.</figcaption></figure>
+
+<h2>Why Bopomofo</h2>
+<p>Traditional CAPTCHAs use Latin letters and digits — exactly what cracking tools are trained on. Bopomofo (ㄅㄆㄇㄈ, the 37 characters at Unicode U+3105–U+3129) shows up far less in general OCR training data. Meanwhile, for a Taiwanese user, seeing ㄍㄨㄟ and typing it back on a Zhuyin keyboard is faster than deciphering warped English letters. That's a rare combination: harder for the attacker, easier for the user.</p>
+<p>The package is adapted from the well-known <a href="https://github.com/mewebstudio/captcha">mews/captcha</a>, with the whole pipeline reworked for multi-byte Bopomofo input, plus single-use validation, timing-leak protection, and per-route throttling.</p>
+
+<h2>Two modes</h2>
+<p><strong>Session mode</strong> — for classic form-based sites. One helper renders the image in Blade, one validation rule checks it:</p>
+<pre><code>{!! bopomofo_captcha_img() !!}
+&lt;input name="captcha" placeholder="Type the symbols above with a Zhuyin IME"&gt;
+
+$request-&gt;validate([
+    'captcha' =&gt; 'required|bopomofo_captcha',
+]);</code></pre>
+<p><strong>Stateless API mode</strong> — for SPAs and mobile clients. Fetch a JSON endpoint for a key and a base64 image, then send the key back when validating:</p>
+<pre><code>GET /bopomofo-captcha/api/default
+→ { "key": "bopomofo_captcha_xxx", "img": "data:image/png;base64,…" }
+
+$request-&gt;validate([
+    'captcha' =&gt; 'required|bopomofo_captcha_api:' . $request-&gt;input('key'),
+]);</code></pre>
+
+<figure><img src="https://quenhenglee.github.io/bopomofo-captcha/images/sample2.png" alt="Bopomofo captcha sample 2"><figcaption>Every render draws a fresh combination with fresh distortion.</figcaption></figure>
+
+<h2>Security design</h2>
+<ul>
+<li><strong>No plaintext answers</strong> — the solution is bcrypt-hashed into the session (or cache, in API mode); the server never stores it readable.</li>
+<li><strong>Single use</strong> — a successful check immediately destroys the record, so an image can't be replayed.</li>
+<li><strong>Timing-leak protection</strong> — check_api() compares on a constant-time path, giving attackers no timing signal.</li>
+<li><strong>Route throttling</strong> — the image endpoints ship with built-in rate limiting against brute-force harvesting.</li>
+</ul>
+
+<h2>What you can tune</h2>
+<p>Four ready-made profiles — default, flat, mini, inverse — each overriding length, dimensions, noise lines, rotation, contrast, sharpen, blur, invert, expiry, and more. Fonts aren't hard-wired: to stay lightweight the package ships without one, and any CJK TTF/OTF covering the Bopomofo block works (Noto Sans TC, Source Han Sans, and jf-openhuninn are all free under SIL OFL). To go really small, subset a full font down to just the 37 glyphs:</p>
+<pre><code>pyftsubset NotoSansTC-Regular.otf \
+    --unicodes=U+3105-3129 \
+    --output-file=NotoSansTC-Bopomofo.ttf</code></pre>
+
+<figure><img src="https://quenhenglee.github.io/bopomofo-captcha/images/sample3.png" alt="Bopomofo captcha sample 3"><figcaption>Difficulty and looks are adjustable via config profiles.</figcaption></figure>
+
+<h2>Getting started</h2>
+<pre><code>composer require hengineer/bopomofo-captcha</code></pre>
+<p>Requirements: PHP 8.1+, Laravel 10/11/12, and the gd / mbstring / fileinfo extensions. There's also a complete <a href="https://github.com/QuenHengLee/bopomofo-captcha-laravel-demo">Docker demo project</a> — docker compose up -d gives you both session and API modes to play with locally.</p>
+<p><strong>Code:</strong> <a href="https://github.com/QuenHengLee/bopomofo-captcha">github.com/QuenHengLee/bopomofo-captcha</a> (MIT License)</p>
+
+<p><em>Originally published at <a href="https://quenhenglee.github.io/bopomofo-captcha/">quenhenglee.github.io</a></em></p>
+
+</article>
+</body>
+</html>

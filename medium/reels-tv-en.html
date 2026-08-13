@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>I Built an Instagram Reels App for Google TV — Because Scrolling Reels on a Phone Wasn't Lazy Enough</title>
+<style>body{max-width:680px;margin:2rem auto;padding:0 1rem;font-family:Georgia,serif;line-height:1.75;color:#222;}img{max-width:100%;height:auto;}pre{background:#f4f4f4;padding:1em;overflow-x:auto;}figure{margin:2em 0;}figcaption{font-size:.85em;color:#666;text-align:center;}blockquote{border-left:3px solid #999;margin-left:0;padding-left:1em;color:#555;}</style>
+</head>
+<body>
+<article>
+
+<h1>I Built an Instagram Reels App for Google TV — Because Scrolling Reels on a Phone Wasn't Lazy Enough</h1>
+
+<p><em>How a ~30 KB Android TV app turns your remote into a Reels controller — no private APIs, no scraping, just a WebView and a lot of key-event plumbing.</em></p>
+
+<figure><img src="https://quenhenglee.github.io/img/a1.jpg" alt="Reels feed"><figcaption>The Reels feed running full-screen on a Chromecast with Google TV — remote-driven, no browser chrome.</figcaption></figure>
+
+<h2>The itch</h2>
+<p>I watch a lot of Instagram Reels. What I don't love is watching them hunched over a phone. My living room has a perfectly good TV — a Chromecast with Google TV — so: why can't I just lean back and scroll Reels with the remote?</p>
+<p>Instagram <em>does</em> have an official TV app now (com.instagram.airwave, February 2026), but it's US-only — in Taiwan it's not even in the Play Store. And Google TV doesn't ship a usable browser. Stuck outside the US, I built the thing myself.</p>
+
+<h2>The core decision: wrap the web, don't reverse the API</h2>
+<p>Rather than reverse-engineer Instagram's private API (a maintenance nightmare that violates the terms and gets accounts flagged), I load instagram.com/reels in a full-screen WebView and let Instagram's own page do the fetching and rendering. The native layer just translates the remote into the right on-page actions. From the servers, it looks like an ordinary Chrome session.</p>
+<blockquote><p>Personal/educational project. Not affiliated with or endorsed by Instagram or Meta. "Instagram" is a trademark of Meta Platforms, Inc.</p></blockquote>
+
+<h2>What it feels like</h2>
+<figure><img src="https://quenhenglee.github.io/img/a5.jpg" alt="Launcher"><figcaption>The app on the Google TV launcher, alongside Netflix, YouTube, Disney+, and Prime Video.</figcaption></figure>
+<p>Remote-key mapping:</p>
+<ul>
+<li><strong>Up / Down</strong> — previous / next reel</li>
+<li><strong>OK (single press)</strong> — play / pause</li>
+<li><strong>OK (double press)</strong> — like / unlike</li>
+<li><strong>OK (long press)</strong> — share to a friend</li>
+<li><strong>Left</strong> — save</li>
+<li><strong>Right</strong> — open comments</li>
+<li><strong>Back</strong> — close dialog → history → exit</li>
+</ul>
+<figure><img src="https://quenhenglee.github.io/img/a2.jpg" alt="Like and save"><figcaption>Double-tapping OK likes the reel (red heart); Left saves it (filled bookmark).</figcaption></figure>
+
+<h2>The interesting part: making dialogs work with a remote</h2>
+<p>Instagram's comment, share, and 2FA menus are modal overlays, and the WebView's spatial navigation lets focus escape the modal — Instagram detects that and instantly closes it. Every dialog "flashed and vanished." The fix: a MutationObserver reports modals to the app via a JS bridge, and when one is open the app takes over the D-pad, moving a blue highlight between the dialog's buttons and clicking on OK.</p>
+<figure><img src="https://quenhenglee.github.io/img/a3.jpg" alt="Share sheet"><figcaption>The share sheet, fully navigable with the D-pad — the blue ring marks the selected friend.</figcaption></figure>
+<figure><img src="https://quenhenglee.github.io/img/a4.jpg" alt="Comments"><figcaption>Comments open as a modal you can scroll and like, all from the remote.</figcaption></figure>
+
+<h2>Four bugs that taught me something</h2>
+<p><strong>1. The "menu opens and instantly closes" bug.</strong> The WebView synthesized a double click for a single DPAD_CENTER on Instagram's &lt;div&gt; buttons (open, then dismiss). Fix: on login pages, intercept OK and do exactly one deliberate click.</p>
+<p><strong>2. Videos default to muted, no touchscreen to fix it.</strong> Setting video.muted=false didn't stick; clicking Instagram's own unmute button does, and it stays unmuted for the session.</p>
+<p><strong>3. Input lag.</strong> The observer re-scanned the whole DOM on every mutation. Debouncing to 200 ms, reporting only on state changes, and capping expensive scans fixed it.</p>
+<p><strong>4. Reels wouldn't load on the actual TV.</strong> The logs showed codec_mm … Out of memory — the cheap Amlogic box has a tiny hardware-decoder pool, and Instagram keeps several videos decoding at once. Fix: keep only the centered reel decoding, pause the rest.</p>
+
+<h2>Takeaways</h2>
+<p>The lesson I keep relearning: <strong>you don't always need to rebuild the thing — sometimes you just need to re-skin how you talk to it.</strong> A WebView plus a few hundred lines of key-event plumbing gave me a lean-back Reels experience that survives Instagram's redesigns.</p>
+<p><strong>Code:</strong> <a href="https://github.com/QuenHengLee/IGReelsTV">github.com/QuenHengLee/IGReelsTV</a></p>
+
+<p><em>Originally published at <a href="https://quenhenglee.github.io/reels-tv.html">quenhenglee.github.io</a></em></p>
+
+</article>
+</body>
+</html>

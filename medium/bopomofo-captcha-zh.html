@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>我做了一個「注音符號驗證碼」Laravel 套件——機器人看不懂，台灣人秒懂</title>
+<style>body{max-width:680px;margin:2rem auto;padding:0 1rem;font-family:Georgia,"PingFang TC","Microsoft JhengHei",serif;line-height:1.75;color:#222;}img{max-width:100%;height:auto;}pre{background:#f4f4f4;padding:1em;overflow-x:auto;}figure{margin:2em 0;}figcaption{font-size:.85em;color:#666;text-align:center;}blockquote{border-left:3px solid #999;margin-left:0;padding-left:1em;color:#555;}</style>
+</head>
+<body>
+<article>
+
+<h1>我做了一個「注音符號驗證碼」Laravel 套件——機器人看不懂，台灣人秒懂</h1>
+
+<p><em>把驗證碼的英數字換成 ㄅㄆㄇㄈ：對 OCR 機器人更陌生、對用注音輸入法的台灣使用者零負擔。套件名稱 hengineer/bopomofo-captcha，MIT 開源。</em></p>
+
+<figure><img src="https://quenhenglee.github.io/bopomofo-captcha/images/sample1.png" alt="注音驗證碼範例 1"><figcaption>實際產生的注音驗證碼——隨機大小、顏色、角度，加上干擾線。</figcaption></figure>
+
+<h2>為什麼是注音</h2>
+<p>傳統驗證碼用英數字，但破解工具也都是針對英數字訓練的。注音符號（ㄅㄆㄇㄈ，Unicode U+3105–U+3129 共 37 個字元）在通用 OCR 的訓練資料裡少見得多；而對台灣使用者來說，看到 ㄍㄨㄟ 直接用注音鍵盤打回去，比辨認扭曲的英文字母還快。這是一個「攻擊者更難、使用者更簡單」的少見組合。</p>
+<p>套件改寫自知名的 <a href="https://github.com/mewebstudio/captcha">mews/captcha</a>，把整條管線換成多 byte 的注音字元，並加上一次性驗證、時序洩漏防護與路由級流量限制。</p>
+
+<h2>兩種使用模式</h2>
+<p><strong>Session 模式</strong>——傳統表單網站用。Blade 裡放一行 helper 產生圖片，validation rule 直接驗：</p>
+<pre><code>{!! bopomofo_captcha_img() !!}
+&lt;input name="captcha" placeholder="請用注音輸入法輸入上方符號"&gt;
+
+$request-&gt;validate([
+    'captcha' =&gt; 'required|bopomofo_captcha',
+]);</code></pre>
+<p><strong>無狀態 API 模式</strong>——給 SPA 或行動端。先打 JSON 端點拿 key 和 base64 圖片，驗證時把 key 一起送回：</p>
+<pre><code>GET /bopomofo-captcha/api/default
+→ { "key": "bopomofo_captcha_xxx", "img": "data:image/png;base64,…" }
+
+$request-&gt;validate([
+    'captcha' =&gt; 'required|bopomofo_captcha_api:' . $request-&gt;input('key'),
+]);</code></pre>
+
+<figure><img src="https://quenhenglee.github.io/bopomofo-captcha/images/sample2.png" alt="注音驗證碼範例 2"><figcaption>每次產生的組合、變形都不同。</figcaption></figure>
+
+<h2>安全設計</h2>
+<ul>
+<li><strong>答案不落地</strong>——正解以 bcrypt 雜湊存在 session（API 模式存 cache），伺服器端不留明文。</li>
+<li><strong>單次使用</strong>——驗證成功立刻銷毀紀錄，同一張圖不能重放。</li>
+<li><strong>時序洩漏防護</strong>——check_api() 的比對走恆定時間路徑，不給攻擊者計時線索。</li>
+<li><strong>路由節流</strong>——產圖端點內建 throttle，擋暴力刷圖。</li>
+</ul>
+
+<h2>可以調整的東西</h2>
+<p>內建四組 profile：default、flat、mini、inverse，各自可覆寫長度、寬高、干擾線數量、旋轉角度、對比、銳化、模糊、反相、有效期限等參數。字型不綁死——套件為了輕量不內建字型，丟任何涵蓋注音區段的 CJK 字型進去就能用（Noto Sans TC、思源黑體、粉圓都是 SIL OFL 免費授權）。想更輕，可以用 pyftsubset 把整套字型精簡成只剩 37 個注音字元：</p>
+<pre><code>pyftsubset NotoSansTC-Regular.otf \
+    --unicodes=U+3105-3129 \
+    --output-file=NotoSansTC-Bopomofo.ttf</code></pre>
+
+<figure><img src="https://quenhenglee.github.io/bopomofo-captcha/images/sample3.png" alt="注音驗證碼範例 3"><figcaption>透過 config profile 可調整難度與外觀。</figcaption></figure>
+
+<h2>怎麼開始</h2>
+<pre><code>composer require hengineer/bopomofo-captcha</code></pre>
+<p>需求：PHP 8.1+、Laravel 10/11/12、gd／mbstring／fileinfo 擴充模組。也有一個完整的 <a href="https://github.com/QuenHengLee/bopomofo-captcha-laravel-demo">Docker demo 專案</a>，docker compose up -d 就能在本機玩到 session 和 API 兩種模式。</p>
+<p><strong>原始碼：</strong><a href="https://github.com/QuenHengLee/bopomofo-captcha">github.com/QuenHengLee/bopomofo-captcha</a>（MIT License）</p>
+
+<p><em>原文發表於 <a href="https://quenhenglee.github.io/bopomofo-captcha/">quenhenglee.github.io</a></em></p>
+
+</article>
+</body>
+</html>

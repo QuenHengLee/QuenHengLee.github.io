@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>我幫 Google TV 做了一個 Instagram Reels App——因為用手機滑 Reels 還不夠懶</title>
+<style>body{max-width:680px;margin:2rem auto;padding:0 1rem;font-family:Georgia,"PingFang TC","Microsoft JhengHei",serif;line-height:1.75;color:#222;}img{max-width:100%;height:auto;}pre{background:#f4f4f4;padding:1em;overflow-x:auto;}figure{margin:2em 0;}figcaption{font-size:.85em;color:#666;text-align:center;}blockquote{border-left:3px solid #999;margin-left:0;padding-left:1em;color:#555;}</style>
+</head>
+<body>
+<article>
+
+<h1>我幫 Google TV 做了一個 Instagram Reels App——因為用手機滑 Reels 還不夠懶</h1>
+
+<p><em>一個約 30 KB 的 Android TV App，如何把你的遙控器變成 Reels 控制器——不用私有 API、不做爬蟲，只靠一個 WebView 和大量的按鍵事件處理。</em></p>
+
+<figure><img src="https://quenhenglee.github.io/img/a1.jpg" alt="Reels 流"><figcaption>在 Chromecast with Google TV 上全螢幕播放的 Reels 流——用遙控器操作、沒有瀏覽器介面。</figcaption></figure>
+
+<h2>起心動念</h2>
+<p>我很常看 Instagram Reels。我不喜歡的是駝著背盯著手機看。我客廳明明有一台好好的電視——一台 Chromecast with Google TV——所以自然就想：為什麼我不能靠在沙發上，用遙控器滑 Reels？</p>
+<p>其實 Instagram 現在<em>有</em>官方電視版了（com.instagram.airwave，2026 年 2 月），但只在美國開放，台灣的 Play 商店根本沒有。而 Google TV 又沒有能用的瀏覽器。卡在美國以外，我乾脆自己做了一個。</p>
+
+<h2>核心決策：包住網頁，而不是逆向 API</h2>
+<p>與其逆向 Instagram 的私有 API（維護惡夢、違反條款、帳號會被標記），我選擇用全螢幕 WebView 載入 instagram.com/reels，讓 Instagram 自己的網頁去抓資料、渲染一切，原生層只負責把遙控器轉成對應的網頁操作。從伺服器看，它就是一個普通的 Chrome 連線。</p>
+<blockquote><p>個人／學習用途專案，與 Instagram 或 Meta 無關。「Instagram」為 Meta Platforms, Inc. 之商標。</p></blockquote>
+
+<h2>實際體驗</h2>
+<figure><img src="https://quenhenglee.github.io/img/a5.jpg" alt="主畫面"><figcaption>App 出現在 Google TV 主畫面，與 Netflix、YouTube 並列。</figcaption></figure>
+<p>遙控器按鍵對應：</p>
+<ul>
+<li><strong>上／下</strong>——上一部／下一部</li>
+<li><strong>OK 單擊</strong>——播放／暫停</li>
+<li><strong>OK 雙擊</strong>——讚／取消讚</li>
+<li><strong>OK 長按</strong>——分享給好友</li>
+<li><strong>左</strong>——收藏</li>
+<li><strong>右</strong>——開啟留言</li>
+<li><strong>返回</strong>——關面板 → 上一頁 → 離開</li>
+</ul>
+<figure><img src="https://quenhenglee.github.io/img/a2.jpg" alt="讚與收藏"><figcaption>雙擊 OK 按讚（紅心）；左鍵收藏（填滿的書籤）。</figcaption></figure>
+
+<h2>最有意思的部分：讓彈窗能用遙控器操作</h2>
+<p>Instagram 的留言、分享、兩步驟驗證選單都是彈出式浮層，而 WebView 的空間導航會把焦點跳出浮層、Instagram 偵測到就立刻關掉——每個彈窗都「閃一下就消失」。修法：用 MutationObserver 偵測浮層並透過 JS 橋接通知原生層，當有彈窗時 App 接管方向鍵，在框內移動藍色選取框、OK 點選。</p>
+<figure><img src="https://quenhenglee.github.io/img/a3.jpg" alt="分享面板"><figcaption>分享面板可用方向鍵操作——藍色選取框標示選中的好友。</figcaption></figure>
+<figure><img src="https://quenhenglee.github.io/img/a4.jpg" alt="留言"><figcaption>留言以浮層開啟，可以用遙控器捲動、按讚。</figcaption></figure>
+
+<h2>四個教會我東西的 bug</h2>
+<p><strong>1. 選單一開就秒關。</strong>WebView 對 Instagram 用 &lt;div&gt; 做的按鈕，把單次 DPAD_CENTER 合成兩次點擊（開了又關）。修法：登入頁攔截 OK，由原生層精準點一次。</p>
+<p><strong>2. 影片預設靜音、電視沒觸控可解。</strong>直接設 video.muted=false 會被 Instagram 蓋回去；改成去點 Instagram 自己的解除靜音鈕，它就整個階段保持有聲。</p>
+<p><strong>3. 輸入延遲。</strong>observer 每次 DOM 變動都重掃整頁。改成節流 200ms、只在狀態改變時回報、昂貴掃描設上限，反應就回來了。</p>
+<p><strong>4. 真正的電視上 Reels 載不出來。</strong>記錄顯示 codec_mm … Out of memory——低階 Amlogic 的硬體解碼器記憶體很小，而 Instagram 同時掛好幾部影片解碼把它塞爆。修法：只讓畫面中央那部解碼、其餘暫停。卡頓消失。</p>
+
+<h2>心得</h2>
+<p>我一再學到的一課：<strong>你不一定要重造那個東西——有時只需要重新包裝你跟它對話的方式。</strong>一個 WebView 加幾百行按鍵處理，就給了我一個能撐過 Instagram 改版的「靠著看」Reels 體驗。</p>
+<p><strong>原始碼：</strong><a href="https://github.com/QuenHengLee/IGReelsTV">github.com/QuenHengLee/IGReelsTV</a></p>
+
+<p><em>原文發表於 <a href="https://quenhenglee.github.io/reels-tv.html">quenhenglee.github.io</a></em></p>
+
+</article>
+</body>
+</html>
