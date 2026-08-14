@@ -3,29 +3,29 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>每週一都被同一個 FCM 告警吵醒——菜鳥工程師第一次追進 SDK 原始碼、第一次向開源專案提改進</title>
+<title>一個修不好的 FCM 告警，變成我人生第一次的開源貢獻</title>
 <style>body{max-width:680px;margin:2rem auto;padding:0 1rem;font-family:Georgia,"PingFang TC","Microsoft JhengHei",serif;line-height:1.75;color:#222;}img{max-width:100%;height:auto;}pre{background:#f4f4f4;padding:1em;overflow-x:auto;}figure{margin:2em 0;}figcaption{font-size:.85em;color:#666;text-align:center;}blockquote{border-left:3px solid #999;margin-left:0;padding-left:1em;color:#555;}</style>
 </head>
 <body>
 <article>
 
-<h1>每週一都被同一個 FCM 告警吵醒——菜鳥工程師第一次追進 SDK 原始碼、第一次向開源專案提改進</h1>
+<h1>一個修不好的 FCM 告警，變成我人生第一次的開源貢獻</h1>
 
-<p><em>一個每週準時出現、怎麼修都修不好的告警,最後發現問題不在我們的程式,而是在我們用的 SDK 裡。這篇記錄我從「看不懂」到「追到原因」到「鼓起勇氣向開源專案提改進」的整個過程。</em></p>
+<p><em>一個反覆出現、怎麼修都修不好的告警,最後發現問題不在我們的程式,而是在我們用的 SDK 裡。這篇記錄一個菜鳥工程師從「看不懂」到「追到原因」,到完成人生第一次開源貢獻的整個過程。</em></p>
 
 <h2>一切從一個很煩的告警開始</h2>
-<p>我在公司負責維護一個推播服務,用 Laravel 寫的,幫好幾個系統發 FCM 推播(就是手機 App 上會跳出來的那種通知)。其中一個系統每週一早上會發週報推播給用戶。</p>
-<p>然後,每週一早上,監控就會響:<strong>「FCM 認證失敗」</strong>。</p>
+<p>我在公司負責維護一個推播服務,用 Laravel 寫的,幫好幾個系統發 FCM 推播(就是手機 App 上會跳出來的那種通知)。其中一個系統會定期發推播給它的用戶。</p>
+<p>然後,每次一發送,監控就會響:<strong>「FCM 認證失敗」</strong>。</p>
 <p>第一次看到的時候我滿緊張的,認證失敗聽起來很嚴重,好像是我們連 Firebase 的鑰匙壞掉了。趕快去檢查 service account 憑證(可以想成我們跟 Firebase 溝通用的鑰匙)——沒過期、沒被撤銷、設定也都對。更奇怪的是,推播其實大部分都發成功了。</p>
-<p>那到底在叫什麼?下週一,同一個告警,又來了。再下週,又來了。</p>
+<p>那到底在叫什麼?下一次發送,同一個告警,又來了。再下一次,還是來了。</p>
 
 <h2>把資料攤開來看,發現不太對勁</h2>
-<p>被吵了幾週之後,我決定把失敗紀錄全部拉出來看。看完發現一個模式:六週累積 920 筆失敗,但來來去去都是同一批 token(token 就是每支手機安裝 App 之後拿到的「地址」,推播要靠它才知道送去哪),算一算大概只有 168 個不重複的。而且每一筆的錯誤都長一樣:</p>
+<p>被吵了好幾次之後,我決定把失敗紀錄全部拉出來看。看完發現一個模式:累積下來 920 筆失敗,但來來去去都是同一批 token(token 就是每支手機安裝 App 之後拿到的「地址」,推播要靠它才知道送去哪),算一算大概只有 168 個不重複的。而且每一筆的錯誤都長一樣:</p>
 <pre><code>HTTP 403 PERMISSION_DENIED
 errorCode: SENDER_ID_MISMATCH</code></pre>
 <p>我去查了 <code>SENDER_ID_MISMATCH</code> 是什麼意思,查到之後鬆了一口氣,但也更困惑了。它的意思是:<strong>這個 token 是別的 Firebase 專案發的,不是我們家的</strong>。最常見的原因是有人拿測試環境的 App 註冊出 token,結果混進了正式環境的名單。</p>
 <p>這種 token 我們永遠發不到,它跟憑證一點關係都沒有。正確的做法很單純:把它標記成失效、從名單移掉,就結束了。不需要告警,更不需要有人緊張。</p>
-<p>但我們的系統把它當成「認證失敗」在處理,所以每週告警一次,而且因為沒人把這批 token 移掉,它們每週都會再失敗一次。無限迴圈。</p>
+<p>但我們的系統把它當成「認證失敗」在處理,所以每次發送都告警一次,而且因為沒人把這批 token 移掉,它們下一次還是會再失敗一次。無限迴圈。</p>
 
 <h2>為什麼我們會把它當成認證失敗?</h2>
 <p>我本來以為是我們自己的程式寫錯,結果追下去發現,我們 catch 到的例外是 <code>AuthenticationError</code>——「認證錯誤」。看到這個名字,誰都會覺得是憑證壞了吧?</p>
@@ -80,8 +80,8 @@ case StatusCode::STATUS_FORBIDDEN:      // 403
 }</code></pre>
 <p>因為其他 401/403 的行為完全沒變,舊的程式碼不會被影響。我補了三個單元測試、一段文件和 CHANGELOG,然後把專案的檢查全部跑過一輪:361 個單元測試全綠、PHPStan(靜態分析)零錯誤、程式碼風格檢查也都過。跑完那一刻真的滿有成就感的。</p>
 
-<h2>第一次提改進給開源專案,學到的兩課</h2>
-<p>本來以為寫完程式就結束了,結果最後一哩路才是新手村。</p>
+<h2>人生第一次開源貢獻,學到的兩課</h2>
+<p>這裡要老實說:這是我<strong>人生第一次</strong>給別人的開源專案提改進。以前我跟開源的關係,大概就是用別人的套件、順手按個 star,頂多把自己的小專案丟上 GitHub。要對一個每月被下載百萬次的專案說「我覺得你這裡可以更好」,光是想就手心冒汗。而且本來以為寫完程式就結束了,結果最後一哩路才是新手村。</p>
 <p>第一課:<strong>先搜尋之前,確認你搜對地方。</strong>我想先確認沒有人提過一樣的問題,但怎麼搜都搜不到這個 repo——後來才發現它在 2026 年 1 月剛從 <code>kreait</code> 搬家到 <code>beste</code> 這個組織(套件名字沒變,所以我完全沒發現)。用舊名字搜,GitHub 會直接跟你說查無此 repo。</p>
 <p>第二課:<strong>先讀 CONTRIBUTING.md,不要急著丟 PR。</strong>這個專案的貢獻指南第一條就寫:動手之前先跟維護者討論,免得任何人把時間花在不會被合併的改動上。所以我忍住了直接開 PR 的衝動,改成開一個 feature request——<a href="https://github.com/beste/firebase-php/issues/1123">beste/firebase-php#1123</a>——把問題、我們的生產數據、官方 SDK 的對照,還有已經寫好測好的<a href="https://github.com/beste/firebase-php/compare/8.x...QuenHengLee:firebase-php:messaging-sender-id-mismatch">分支連結</a>全部附上,跟維護者說:你點頭我就開 PR。</p>
 <p>現在就是等回覆的狀態。就算最後沒被採納,這一路學到的東西也已經值回票價了。</p>
