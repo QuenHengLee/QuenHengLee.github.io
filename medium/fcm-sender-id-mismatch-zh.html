@@ -3,83 +3,99 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>每週一準時誤報的 FCM 告警——我追進 SDK 原始碼，然後給開源社群提了一個修正</title>
+<title>每週一都被同一個 FCM 告警吵醒——菜鳥工程師第一次追進 SDK 原始碼、第一次向開源專案提改進</title>
 <style>body{max-width:680px;margin:2rem auto;padding:0 1rem;font-family:Georgia,"PingFang TC","Microsoft JhengHei",serif;line-height:1.75;color:#222;}img{max-width:100%;height:auto;}pre{background:#f4f4f4;padding:1em;overflow-x:auto;}figure{margin:2em 0;}figcaption{font-size:.85em;color:#666;text-align:center;}blockquote{border-left:3px solid #999;margin-left:0;padding-left:1em;color:#555;}</style>
 </head>
 <body>
 <article>
 
-<h1>每週一準時誤報的 FCM 告警——我追進 SDK 原始碼，然後給開源社群提了一個修正</h1>
+<h1>每週一都被同一個 FCM 告警吵醒——菜鳥工程師第一次追進 SDK 原始碼、第一次向開源專案提改進</h1>
 
-<p><em>一個 403 錯誤被 SDK 歸類成「憑證失敗」，害我們每週誤發服務級告警、無效 token 永遠清不掉。追到根源後，我把修正做好、測好，提給了 PHP 生態最多人用的 Firebase SDK。這篇記錄整個過程，以及我真正想要的：錯誤分類應該向官方 Firebase Admin SDK 看齊。</em></p>
+<p><em>一個每週準時出現、怎麼修都修不好的告警,最後發現問題不在我們的程式,而是在我們用的 SDK 裡。這篇記錄我從「看不懂」到「追到原因」到「鼓起勇氣向開源專案提改進」的整個過程。</em></p>
 
-<h2>事情從一個「不會收斂」的告警開始</h2>
-<p>我們維護一個多租戶的 FCM 推播服務（Laravel），其中一個租戶每週一固定發送週報推播。從某一週開始，監控系統每週一早上準時響：<strong>FCM 認證失敗</strong>。值班的人檢查 service account 憑證——沒過期、沒被撤銷、專案設定也對。推播其實大部分都發成功了，告警卻週週再來。</p>
-<p>拉出六週的資料後，模式很明顯：920 筆失敗全部來自約 168 個不重複的 token，每一筆都是同一種錯誤——HTTP <code>403 PERMISSION_DENIED</code>，錯誤碼 <code>SENDER_ID_MISMATCH</code>。這不是憑證問題，是這批 token 根本屬於<strong>別的 Firebase 專案</strong>（典型情境：測試環境的 App 註冊出來的 token 混進了正式環境的名單）。這種 token 對我們的專案來說永遠發不到，正確的處置是把它標記失效、從名單移除，然後就沒有然後了。</p>
-<p>但我們的系統既沒有移除它們，還每週為它們發告警。為什麼？</p>
+<h2>一切從一個很煩的告警開始</h2>
+<p>我在公司負責維護一個推播服務,用 Laravel 寫的,幫好幾個系統發 FCM 推播(就是手機 App 上會跳出來的那種通知)。其中一個系統每週一早上會發週報推播給用戶。</p>
+<p>然後,每週一早上,監控就會響:<strong>「FCM 認證失敗」</strong>。</p>
+<p>第一次看到的時候我滿緊張的,認證失敗聽起來很嚴重,好像是我們連 Firebase 的鑰匙壞掉了。趕快去檢查 service account 憑證(可以想成我們跟 Firebase 溝通用的鑰匙)——沒過期、沒被撤銷、設定也都對。更奇怪的是,推播其實大部分都發成功了。</p>
+<p>那到底在叫什麼?下週一,同一個告警,又來了。再下週,又來了。</p>
 
-<h2>追進 SDK：兩個相反的問題，同一個例外</h2>
-<p>我們用的是 <a href="https://github.com/beste/firebase-php">kreait/firebase-php</a>——PHP 生態事實上的 Firebase Admin SDK，每月下載量超過百萬。追進它的 <code>MessagingApiExceptionConverter</code>，找到了根源：</p>
-<pre><code>case StatusCode::STATUS_UNAUTHORIZED:
-case StatusCode::STATUS_FORBIDDEN:
+<h2>把資料攤開來看,發現不太對勁</h2>
+<p>被吵了幾週之後,我決定把失敗紀錄全部拉出來看。看完發現一個模式:六週累積 920 筆失敗,但來來去去都是同一批 token(token 就是每支手機安裝 App 之後拿到的「地址」,推播要靠它才知道送去哪),算一算大概只有 168 個不重複的。而且每一筆的錯誤都長一樣:</p>
+<pre><code>HTTP 403 PERMISSION_DENIED
+errorCode: SENDER_ID_MISMATCH</code></pre>
+<p>我去查了 <code>SENDER_ID_MISMATCH</code> 是什麼意思,查到之後鬆了一口氣,但也更困惑了。它的意思是:<strong>這個 token 是別的 Firebase 專案發的,不是我們家的</strong>。最常見的原因是有人拿測試環境的 App 註冊出 token,結果混進了正式環境的名單。</p>
+<p>這種 token 我們永遠發不到,它跟憑證一點關係都沒有。正確的做法很單純:把它標記成失效、從名單移掉,就結束了。不需要告警,更不需要有人緊張。</p>
+<p>但我們的系統把它當成「認證失敗」在處理,所以每週告警一次,而且因為沒人把這批 token 移掉,它們每週都會再失敗一次。無限迴圈。</p>
+
+<h2>為什麼我們會把它當成認證失敗?</h2>
+<p>我本來以為是我們自己的程式寫錯,結果追下去發現,我們 catch 到的例外是 <code>AuthenticationError</code>——「認證錯誤」。看到這個名字,誰都會覺得是憑證壞了吧?</p>
+<p>我們用的是 <a href="https://github.com/beste/firebase-php">kreait/firebase-php</a> 這個套件。Firebase 官方沒有出 PHP 版的 Admin SDK,這個社群維護的套件就是 PHP 圈實質上的標準,每個月被下載超過一百萬次。我第一次點進它的原始碼(以前都只敢看文件),在一個叫 <code>MessagingApiExceptionConverter</code> 的檔案裡找到了這段:</p>
+<pre><code>case StatusCode::STATUS_UNAUTHORIZED:   // 401
+case StatusCode::STATUS_FORBIDDEN:      // 403
     $convertedError = new AuthenticationError($message, previous: $previous);</code></pre>
-<p>401 和 403 被合併成同一個 <code>AuthenticationError</code>。而這兩個狀態碼背後，是兩個需要<strong>完全相反處置</strong>的問題：</p>
+<p>原來如此。<strong>401 和 403 被轉成同一個例外了。</strong></p>
+<p>這兩個狀態碼乍看很像,但代表的事情差很多:</p>
 <ul>
-<li><strong>401 UNAUTHENTICATED</strong>——service account 憑證真的壞了（過期、被撤銷、專案錯誤）。這是服務級的設定問題：停止發送、通知維運、修憑證。</li>
-<li><strong>403 + SENDER_ID_MISMATCH</strong>——這一顆 token 屬於別的專案。這是單一 token 的永久失效：記錄、移除、<strong>不需要任何人半夜起床</strong>。</li>
+<li><strong>401</strong>:你的鑰匙(憑證)真的壞了。整個服務都發不出去,要趕快通知人來修。</li>
+<li><strong>403 + SENDER_ID_MISMATCH</strong>:鑰匙沒問題,只是「這一個 token」不是你們家的。把它移掉就好,其他推播完全不受影響。</li>
 </ul>
-<p>我們的程式把 <code>AuthenticationError</code> 當成「我的憑證壞了」來處理——這個解讀完全合理，卻同時踩中兩個坑：(a) 誤發憑證告警，(b) 永遠不會把錯配的 token 清掉，所以同一批 token 每次活動都再失敗一次，永不收斂。</p>
+<p>一個要人半夜起床,一個完全不用。但因為 SDK 給的是同一個例外,我們的程式分不出來。</p>
 
-<h2>先止血：一個我自己都不喜歡的 workaround</h2>
-<p>資訊其實沒有丟——<code>$e-&gt;getMessage()</code> 是 <code>"SenderId mismatch"</code>，<code>$e-&gt;errors()</code> 裡也有完整的 <code>errorCode</code>。所以應用層可以自己分流：</p>
+<h2>先止血:一個我自己都覺得心虛的 workaround</h2>
+<p>好消息是資訊沒有真的不見——例外的訊息裡有 <code>"SenderId mismatch"</code> 這串字,<code>$e-&gt;errors()</code> 裡也有完整的錯誤碼。所以我先在自己的程式裡用字串比對硬分:</p>
 <pre><code>} catch (AuthenticationError $e) {
     $text = strtolower(json_encode($e-&gt;errors()).' '.$e-&gt;getMessage());
     if (str_contains($text, 'sender') &amp;&amp; str_contains($text, 'mismatch')) {
-        // 單 token 永久失效：標記、移除
+        // 是 token 的問題:標記失效、移除
     } else {
-        // 真的憑證問題：告警
+        // 是真的憑證問題:告警
     }
 }</code></pre>
-<p>能用，但它依賴 FCM 錯誤訊息的<strong>措辭</strong>和 payload 的<strong>形狀</strong>——這兩樣 Google 都沒有給過契約保證。哪天錯誤訊息改個大小寫、換個說法，分流就靜悄悄地失效了。用字串比對來做例外分類，本質上是在替 SDK 補課。</p>
+<p>告警不再誤報了,token 也開始被清掉了。但說實話,這段程式我寫得很心虛——我是在用「錯誤訊息裡有沒有某幾個英文字」來判斷要不要叫醒工程師。哪天 Google 把訊息的措辭改一下,這段判斷就會默默失效,而且我完全不會發現。</p>
 
-<h2>我真正想要的：向官方 Firebase Admin SDK 看齊</h2>
-<p>這是我決定往上游提改進的核心理由。<code>SENDER_ID_MISMATCH</code> 不是什麼罕見的邊角案例——它就列在 <a href="https://firebase.google.com/docs/reference/fcm/rest/v1/ErrorCode">FCM HTTP v1 的官方 ErrorCode 列表</a>裡，而且<strong>每一個官方 Firebase Admin SDK 都把它獨立成可辨識的錯誤型別</strong>：</p>
+<h2>去看別人家是怎麼做的</h2>
+<p>寫完 workaround 之後我一直覺得哪裡怪怪的:這麼常見的錯誤,不可能只有我們遇到吧?所以我去翻了 Firebase <strong>官方</strong>的 Admin SDK(官方有出 Node.js、Java、Go 這些版本),看它們怎麼處理同一個錯誤。</p>
+<p>結果每一個官方 SDK 都把 <code>SENDER_ID_MISMATCH</code> 獨立出來:</p>
 <ul>
-<li><strong>Node.js</strong>：錯誤碼 <code>messaging/sender-id-mismatch</code>，官方文件明確把它和 UNREGISTERED 並列為「應該從資料庫移除 token」的訊號。</li>
-<li><strong>Java</strong>：列舉值 <code>MessagingErrorCode.SENDER_ID_MISMATCH</code>。</li>
-<li><strong>Go</strong>：判斷函式 <code>messaging.IsSenderIDMismatch()</code>。</li>
+<li><strong>Node.js</strong>:有專門的錯誤碼 <code>messaging/sender-id-mismatch</code>,官方文件還直接把它跟「token 已註銷」並列,說看到這兩種就該把 token 從資料庫移掉。</li>
+<li><strong>Java</strong>:有 <code>MessagingErrorCode.SENDER_ID_MISMATCH</code> 這個列舉值。</li>
+<li><strong>Go</strong>:甚至有一個現成的判斷函式 <code>IsSenderIDMismatch()</code>。</li>
 </ul>
-<p>換句話說，官方 SDK 的錯誤分類是照「呼叫端需要的<strong>處置</strong>」設計的，而不是照 HTTP 狀態碼。kreait 自己其實也有同樣精神的先例——UNREGISTERED（404）就有獨立的 <code>NotFound</code> 例外，甚至能吐回出問題的 token。403 的 sender mismatch 沒理由是例外。一個非官方 SDK 最有價值的特質之一，就是行為和官方 SDK <strong>對得起來</strong>：開發者在 Node 學到的錯誤處理心智模型，搬到 PHP 不應該失效。</p>
+<p>看到這裡我才確定:不是我想太多,是 PHP 這邊真的少了這一塊。官方 SDK 分錯誤的方式,是照「你接到這個錯誤之後<strong>該做什麼</strong>」來分的,不是照 HTTP 狀態碼。而且 kreait 這個套件自己也有類似的先例——token 已註銷(404)就有專門的 <code>NotFound</code> 例外。那 sender mismatch 沒道理沒有。</p>
+<p>我心裡的期望其實很簡單:<strong>我在 Node 文件學到的錯誤處理方式,搬到 PHP 應該也要能用</strong>。同一個 FCM 錯誤,不該因為換了一個語言,就從「有名字的錯誤」變成「跟憑證壞掉長一樣的錯誤」。</p>
 
-<h2>動手修：一個新例外，向下相容</h2>
-<p>修正本身不大。新增一個 <code>SenderIdMismatch</code> 例外（和既有的 <code>AuthenticationError</code>、<code>NotFound</code> 同樣的結構），然後把 converter 的 403 分支拆開——偵測到 FCM 回應細節裡的 <code>errorCode: SENDER_ID_MISMATCH</code>（以官方訊息 <code>"SenderId mismatch"</code> 作備援判斷）就丟新例外，其餘 401/403 一律維持原樣：</p>
+<h2>那就自己動手吧</h2>
+<p>改動本身出乎意料地小。加一個新的例外類別 <code>SenderIdMismatch</code>(照著套件裡其他例外的樣子寫),然後把 converter 裡 403 的那條路拆出來:如果回應裡帶著 <code>SENDER_ID_MISMATCH</code> 錯誤碼,就丟新的例外;其他的 401/403 通通維持原樣:</p>
 <pre><code>case StatusCode::STATUS_FORBIDDEN:
     $convertedError = $this-&gt;isSenderIdMismatch($errors, $message)
         ? new SenderIdMismatch($message, previous: $previous)
         : new AuthenticationError($message, previous: $previous);</code></pre>
-<p>之後呼叫端就能用型別直接表達意圖，不用再猜字串：</p>
+<p>這樣以後用的人就可以直接 catch 型別,不用再猜字串:</p>
 <pre><code>try {
     $messaging-&gt;send($message);
 } catch (SenderIdMismatch $e) {
-    // token 屬於別的專案：永久失效，移除即可
+    // token 是別人家的:移除它就好
 } catch (AuthenticationError $e) {
-    // 真的憑證問題：告警
+    // 憑證真的有問題:告警
 }</code></pre>
-<p>因為其他 401/403 的行為完全不變，對現有使用者是向下相容的——只有想要新粒度的人會感覺到差異。連同三個單元測試、文件章節和 CHANGELOG，整包改動跑過完整品質關卡：單元測試 361 個全綠、PHPStan 零錯誤、PHP-CS-Fixer 和 Rector 都乾淨。</p>
+<p>因為其他 401/403 的行為完全沒變,舊的程式碼不會被影響。我補了三個單元測試、一段文件和 CHANGELOG,然後把專案的檢查全部跑過一輪:361 個單元測試全綠、PHPStan(靜態分析)零錯誤、程式碼風格檢查也都過。跑完那一刻真的滿有成就感的。</p>
 
-<h2>開源的最後一哩：先開 issue，不是先丟 PR</h2>
-<p>過程中有兩個小插曲值得記。第一，這個 repo 在 2026 年 1 月剛從 <code>kreait</code> 組織搬到 <code>beste</code>（套件名不變），在舊名字底下搜尋既有 issue 會直接失敗——確認「沒有人提過」這件事花的功夫比想像中多。第二，專案的 CONTRIBUTING.md 明白寫著：<strong>先跟維護者討論，再動手開 PR</strong>，避免任何人把時間花在無法合併的改動上。</p>
-<p>所以我沒有直接丟 PR，而是開了一個 feature request——<a href="https://github.com/beste/firebase-php/issues/1123">beste/firebase-php#1123</a>——把問題、生產環境數據、官方 SDK 的對照、還有已經全綠的<a href="https://github.com/beste/firebase-php/compare/8.x...QuenHengLee:firebase-php:messaging-sender-id-mismatch">實作分支</a>全部附上，表明維護者點頭就能立刻開 PR。尊重專案的流程，跟把程式寫對一樣重要。</p>
+<h2>第一次提改進給開源專案,學到的兩課</h2>
+<p>本來以為寫完程式就結束了,結果最後一哩路才是新手村。</p>
+<p>第一課:<strong>先搜尋之前,確認你搜對地方。</strong>我想先確認沒有人提過一樣的問題,但怎麼搜都搜不到這個 repo——後來才發現它在 2026 年 1 月剛從 <code>kreait</code> 搬家到 <code>beste</code> 這個組織(套件名字沒變,所以我完全沒發現)。用舊名字搜,GitHub 會直接跟你說查無此 repo。</p>
+<p>第二課:<strong>先讀 CONTRIBUTING.md,不要急著丟 PR。</strong>這個專案的貢獻指南第一條就寫:動手之前先跟維護者討論,免得任何人把時間花在不會被合併的改動上。所以我忍住了直接開 PR 的衝動,改成開一個 feature request——<a href="https://github.com/beste/firebase-php/issues/1123">beste/firebase-php#1123</a>——把問題、我們的生產數據、官方 SDK 的對照,還有已經寫好測好的<a href="https://github.com/beste/firebase-php/compare/8.x...QuenHengLee:firebase-php:messaging-sender-id-mismatch">分支連結</a>全部附上,跟維護者說:你點頭我就開 PR。</p>
+<p>現在就是等回覆的狀態。就算最後沒被採納,這一路學到的東西也已經值回票價了。</p>
 
-<h2>帶走的三件事</h2>
+<h2>如果你也是第一次遇到這種事</h2>
 <ul>
-<li><strong>例外階層要照「處置」設計，不是照狀態碼。</strong>如果兩個錯誤需要相反的處理方式，它們就不該是同一個型別——不管它們的 HTTP 狀態碼有多接近。</li>
-<li><strong>非官方 SDK 的錯誤分類，應該向官方 SDK 對齊。</strong>官方文件把 SENDER_ID_MISMATCH 和 UNREGISTERED 並列為「清 token」訊號是有原因的；生態系裡每一種語言的開發者都值得同一套心智模型。</li>
-<li><strong>在應用層用字串比對分流例外，是 SDK 欠你一個型別的訊號。</strong>workaround 可以止血，但把修正提回上游，才是讓同一個坑不再有下一個受害者的方法。</li>
+<li><strong>告警一直重複出現又「修不好」,先懷疑是不是分類錯了。</strong>我們的告警本身沒壞,是它把兩種完全不同的問題混在一起了。</li>
+<li><strong>SDK 的原始碼沒有想像中可怕。</strong>我以前只敢看文件,這次被逼著點進去,發現關鍵的那段其實就十幾行。</li>
+<li><strong>遇到不確定的設計問題,去看官方 SDK 怎麼做。</strong>官方把 SENDER_ID_MISMATCH 獨立出來是有原因的,那就是最好的參考答案。</li>
+<li><strong>workaround 可以先救火,但如果根源在上游,就把修正提回去。</strong>不然下一個用這個套件的人,還是會掉進同一個坑。</li>
 </ul>
 
-<p><strong>Issue：</strong><a href="https://github.com/beste/firebase-php/issues/1123">beste/firebase-php#1123</a><br>
-<strong>實作分支：</strong><a href="https://github.com/QuenHengLee/firebase-php/tree/messaging-sender-id-mismatch">QuenHengLee/firebase-php:messaging-sender-id-mismatch</a></p>
+<p><strong>Issue:</strong><a href="https://github.com/beste/firebase-php/issues/1123">beste/firebase-php#1123</a><br>
+<strong>實作分支:</strong><a href="https://github.com/QuenHengLee/firebase-php/tree/messaging-sender-id-mismatch">QuenHengLee/firebase-php:messaging-sender-id-mismatch</a></p>
 
 <p><em>原文發表於 <a href="https://quenhenglee.github.io/medium/fcm-sender-id-mismatch-zh.html">quenhenglee.github.io</a></em></p>
 
