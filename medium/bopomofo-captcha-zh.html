@@ -35,6 +35,8 @@ $request-&gt;validate([
     'captcha' =&gt; 'required|bopomofo_captcha_api:' . $request-&gt;input('key'),
 ]);</code></pre>
 
+<figure><img src="https://quenhenglee.github.io/medium/img/bopomofo-medium-screenshot.png" alt="Vue 前端呼叫 stateless API 的實際畫面"><figcaption>API 模式實例：一個 Vue SPA 透過 Vite proxy 打 stateless API 取圖與驗證——取得驗證碼圖片、輸入注音、送出。</figcaption></figure>
+
 <figure><img src="https://quenhenglee.github.io/bopomofo-captcha/images/sample2.png" alt="注音驗證碼範例 2"><figcaption>每次產生的組合、變形都不同。</figcaption></figure>
 
 <h2>安全設計</h2>
