@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Home Assistant 一開機就自己「看見」我的 Nest Hub 和 Chromecast——mDNS 自動探索是怎麼運作的</title>
+<style>body{max-width:680px;margin:2rem auto;padding:0 1rem;font-family:Georgia,"PingFang TC","Microsoft JhengHei",serif;line-height:1.75;color:#222;}img{max-width:100%;height:auto;}pre{background:#f4f4f4;padding:1em;overflow-x:auto;}figure{margin:2em 0;}figcaption{font-size:.85em;color:#666;text-align:center;}blockquote{border-left:3px solid #999;margin-left:0;padding-left:1em;color:#555;}</style>
+</head>
+<body>
+<article>
+
+<h1>Home Assistant 一開機就自己「看見」我的 Nest Hub 和 Chromecast——mDNS 自動探索是怎麼運作的</h1>
+
+<p><em>我在一台舊 PC 的 Docker 上架好 Home Assistant,什麼都還沒設定,通知欄就跳出「發現新裝置」:Nest Hub、Nest Mini、小米電視、Chromecast with Google TV 全部到齊。它是怎麼知道的?這篇把背後的 mDNS 機制講清楚,順便解釋為什麼容器一定要用 host network。</em></p>
+
+<h2>先看現象:零設定的「發現新裝置」</h2>
+<p>Home Assistant 容器啟動後不到一分鐘,設定頁面就列出了我家所有 Google Cast 裝置,點兩下確認就變成可以控制的 <code>media_player</code> 實體。我沒有輸入任何 IP、沒有掃任何 QR code、也沒有登入 Google 帳號。</p>
+<figure><img src="https://quenhenglee.github.io/medium/img/ha-overview.png" alt="HA 總覽頁自動出現的 Cast 裝置"><figcaption>剛架好的 HA 總覽頁:客廳電視、Nest Hub、Nest Mini 等 media_player 全是 mDNS 自動探索來的,一個 IP 都沒輸入過。</figcaption></figure>
+<p>這不是魔法,是一個 1990 年代就存在的協定家族在工作:<strong>mDNS(Multicast DNS)+ DNS-SD(DNS Service Discovery)</strong>,Apple 陣營叫它 Bonjour,Google 的實作叫 zeroconf。</p>
+
+<h2>mDNS:沒有 DNS 伺服器的 DNS</h2>
+<p>一般的 DNS 查詢要問伺服器:「<code>example.com</code> 的 IP 是多少?」mDNS 則是在區域網路內「用喊的」——裝置把查詢封包丟到一個約定好的多播位址:</p>
+<pre><code>IPv4:224.0.0.251  port 5353
+IPv6:ff02::fb     port 5353</code></pre>
+<p>網路上所有裝置都聽著這個位址。誰符合條件,誰就自己跳出來回答。整個過程沒有中央伺服器,所以叫 zero-configuration networking。</p>
+
+<h2>DNS-SD:用服務類型當關鍵字</h2>
+<p>光有 mDNS 還不夠,還要知道「要喊什麼」。DNS-SD 定義了服務類型的命名慣例,每種服務有自己的識別字串。Home Assistant 啟動時,內建的 zeroconf 整合會對區網廣播一長串查詢,其中跟 Google 生態相關的是:</p>
+<pre><code>_googlecast._tcp.local        → 所有 Cast 裝置
+_androidtvremote2._tcp.local  → Google TV / Android TV 遙控協定</code></pre>
+<p>我的 Nest Hub 2、Nest Mini、Chromecast with Google TV、小米電視都內建 Cast 接收器,它們無時無刻都在監聽 5353 port。聽到「有 <code>_googlecast._tcp</code> 的請舉手」,就回一組記錄:</p>
+<ul>
+<li><strong>PTR 記錄</strong>——「我是 <code>Nest-Hub-xxxx._googlecast._tcp.local</code>」</li>
+<li><strong>SRV 記錄</strong>——「我的服務在 port 8009」</li>
+<li><strong>A / AAAA 記錄</strong>——「我的 IP 是 192.168.1.x」</li>
+<li><strong>TXT 記錄</strong>——附加資訊:裝置型號(<code>md=Google Nest Hub</code>)、好記的名稱(<code>fn=客廳顯示器</code>)、韌體版本等</li>
+</ul>
+<p>Home Assistant 收到這些回答,比對出「這是 Cast 裝置」,就在介面上跳出探索通知。你按下確認後,它用剛剛拿到的 IP 和 port 8009 建立長連線(Cast 協定 v2,protobuf over TLS),從此可以查詢播放狀態、投放媒體、發 TTS 語音廣播。</p>
+
+<h2>為什麼容器必須用 host network</h2>
+<p>這是 Docker 部署 HA 最常踩的坑。mDNS 是<strong>鏈路層多播</strong>——封包的 TTL 是 1,只在同一個 L2 網段內有效,不會被路由器轉發。Docker 預設的 bridge 網路會把容器放進一個獨立的虛擬網段(172.17.x.x),多播封包出不去也進不來,HA 就會變成聾子:一台裝置都探索不到。</p>
+<p>解法就是我 compose 檔裡的這一行:</p>
+<pre><code>services:
+  homeassistant:
+    image: ghcr.io/home-assistant/home-assistant:stable
+    network_mode: host    # 容器直接用主機的網路堆疊
+    ...</code></pre>
+<p><code>network_mode: host</code> 讓容器直接共用主機的網卡,HA 發出的 mDNS 查詢跟實體機器發的一模一樣,所有 Cast 裝置都聽得到。這也是為什麼這套架構<strong>不能跑在 Docker Desktop for Windows</strong>——它的 host network 是包在一層虛擬機裡的,多播封包照樣穿不透,只有 Linux 上的 Docker Engine 才是真正的 host network。</p>
+
+<h2>探索到之後:兩個整合各管一件事</h2>
+<figure><img src="https://quenhenglee.github.io/medium/img/ha-integrations.png" alt="HA 整合頁:已掃描的 Android TV Remote 與 Google Cast"><figcaption>整合頁面:Google Cast 已認領 7 個裝置,上方「已掃描」區還躺著一張等待確認的 Android TV Remote 卡片——這就是 mDNS 探索的即時成果。</figcaption></figure>
+<p><strong>Google Cast 整合</strong>負責「媒體」——每台裝置變成一個 <code>media_player</code>:看得到正在播什麼、控制音量、投 YouTube、對 Nest Mini 發 TTS 廣播(自動化裡讓音箱說「洗衣機漏水了!」就是靠這個)。</p>
+<p><strong>Android TV Remote 整合</strong>負責「遙控器」——它探索的是 <code>_androidtvremote2._tcp</code>,只有 Google TV 系統的裝置(我的小米電視和 Chromecast)會回應。配對時電視會顯示六位數配對碼,輸入一次以後,HA 就能模擬遙控器按鍵、開關機、直接啟動指定 App。</p>
+<p>同一台電視會被兩個整合各認領一次,這是正常的:Cast 管投放,Remote 管按鍵,功能互補。</p>
+
+<h2>如果探索不到,查這三個地方</h2>
+<ul>
+<li><strong>路由器的 mDNS/IGMP snooping 設定</strong>——有些路由器或 Mesh 系統會過濾多播封包來「優化」WiFi,把 IGMP snooping 關掉或開 mDNS 通透(有的叫 Bonjour/Avahi passthrough)。</li>
+<li><strong>裝置和 HA 主機要在同一個網段</strong>——訪客網路、IoT VLAN 隔離都會擋掉 mDNS。我的做法是全部放同一個 /24。</li>
+<li><strong>容器網路模式</strong>——回頭確認 <code>docker inspect homeassistant</code> 的 NetworkMode 真的是 host,不是 bridge。</li>
+</ul>
+
+<h2>小結</h2>
+<p>「自動探索」拆開來只有三步:HA 對 224.0.0.251:5353 喊出服務類型 → Cast 裝置自報 IP、port 和型號 → HA 建立連線把它變成實體。理解這條鏈之後,除錯就有方向了——探索失敗永遠是「多播封包在哪一段被擋掉」的問題,而不是玄學。</p>
+
+<p><em>本文是「把智慧家庭搬進 Home Assistant」系列的一部分。環境:Ubuntu Server 24.04 + Docker Engine,HA Container 版,host network。</em></p>
+
+</article>
+</body>
+</html>

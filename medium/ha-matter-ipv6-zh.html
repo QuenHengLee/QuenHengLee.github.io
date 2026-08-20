@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Matter Server 到底在做什麼?——HA Container 的 5580 port、WebSocket 與 IPv6 拆解</title>
+<style>body{max-width:680px;margin:2rem auto;padding:0 1rem;font-family:Georgia,"PingFang TC","Microsoft JhengHei",serif;line-height:1.75;color:#222;}img{max-width:100%;height:auto;}pre{background:#f4f4f4;padding:1em;overflow-x:auto;}figure{margin:2em 0;}figcaption{font-size:.85em;color:#666;text-align:center;}blockquote{border-left:3px solid #999;margin-left:0;padding-left:1em;color:#555;}</style>
+</head>
+<body>
+<article>
+
+<h1>Matter Server 到底在做什麼?——HA Container 的 5580 port、WebSocket 與 IPv6 拆解</h1>
+
+<p><em>架好 Home Assistant 之後,我在 Matter 整合裡填了一個神祕的 <code>ws://localhost:5580/ws</code>,然後檢查主機有沒有 <code>fe80::</code> 開頭的 IPv6 位址。這兩件事分別是什麼?為什麼缺一不可?這篇把 Matter 在 HA 裡的完整鏈路講清楚。</em></p>
+
+<h2>為什麼需要「另一個容器」</h2>
+<p>用 Home Assistant OS 的人在 Add-on 商店按一個鍵就有 Matter 支援,但我用的是 <strong>Container 版</strong>(跑在自己的 Ubuntu + Docker 上),沒有 Add-on 商店——所謂 Add-on 其實就是 HA OS 幫你管理的 Docker 容器。所以 Container 版的使用者要自己把那個容器跑起來:</p>
+<pre><code>services:
+  matter-server:
+    image: ghcr.io/home-assistant-libs/python-matter-server:stable
+    network_mode: host        # Matter 需要主機的 IPv6 與 mDNS
+    security_opt:
+      - apparmor=unconfined
+    volumes:
+      - ./matter-data:/data
+    restart: unless-stopped</code></pre>
+<p>這個 <code>python-matter-server</code> 才是真正的 <strong>Matter 控制器(controller)</strong>。Home Assistant 本體其實不會說 Matter 協定——它只是控制器的前端。</p>
+<figure><img src="https://quenhenglee.github.io/medium/img/ha-integrations.png" alt="HA 整合頁,已有 Matter 與 Thread 整合"><figcaption>接上 Matter Server 之後的整合頁:Matter 與 Thread 都已就位,和 Google Cast 並列。</figcaption></figure>
+
+<h2>5580 port 和那串 WebSocket URL</h2>
+<p>Matter Server 啟動後監聽 5580 port,提供一個 WebSocket API。HA 的 Matter 整合就是這個 API 的客戶端,設定時填的:</p>
+<pre><code>ws://localhost:5580/ws</code></pre>
+<p>意思是「HA,你要找的 Matter 控制器就在同一台主機的 5580」。因為兩個容器都是 host network,<code>localhost</code> 直接互通。之後的分工是:</p>
+<ul>
+<li><strong>HA → Matter Server</strong>:透過 WebSocket 下指令(「開燈」「讀感測器」「配對新裝置」)。</li>
+<li><strong>Matter Server → 裝置</strong>:把指令翻譯成真正的 Matter 協定封包,走 IPv6/UDP 送到裝置上。</li>
+<li><strong>裝置 → Matter Server → HA</strong>:狀態變化用 Matter 的訂閱機制(subscription)推回來,HA 的實體即時更新。</li>
+</ul>
+<p>還有一件重要的事發生在 Matter Server 裡:它保管整個 <strong>fabric 的憑證</strong>。Matter 的安全模型是每個控制生態(Google Home、Apple Home、HA)各自是一個 fabric,裝置配對時交換的金鑰全部存在 <code>./matter-data</code> 這個 volume——備份 HA 的時候,這個資料夾同樣要備,不然所有 Matter 裝置得重新配對。</p>
+
+<h2>為什麼 Matter 非 IPv6 不可</h2>
+<p>Matter 規格直接建立在 IPv6 之上,這不是可選項。原因出在它要打通兩種完全不同的網路:</p>
+<ul>
+<li><strong>Matter over WiFi</strong>(我的 Sonoff M5 牆壁開關)——裝置在一般的 WiFi 上,同時有 IPv4 和 IPv6。</li>
+<li><strong>Matter over Thread</strong>(我的 IKEA 遙控器、動態感應器、漏水感應器)——Thread 是 802.15.4 低功耗網狀網路,<strong>只有 IPv6</strong>,根本沒有 IPv4 這回事。</li>
+</ul>
+<p>要讓一套協定同時涵蓋兩邊,最小公倍數就是 IPv6。所以檢查部署是否達標的第一件事是:</p>
+<pre><code>$ ip -6 addr show scope link
+inet6 fe80::1222:150c:21e3:1376/64 scope link</code></pre>
+<p>看到 <code>fe80::</code> 開頭的 <strong>link-local 位址</strong>就代表主機的 IPv6 堆疊是活的。link-local 是 IPv6 的特殊設計:不需要路由器、不需要 ISP 支援 IPv6,每張網卡自己就會生出一個只在本網段有效的位址。跟 WiFi 上的 Matter 裝置(像 Sonoff)通訊,這樣就夠了——<strong>家裡的網路沒有 IPv6 上網能力也能玩 Matter</strong>。</p>
+
+<h2>Thread 裝置多一關:border router 與路由</h2>
+<p>Thread 裝置不在 WiFi 上,它們活在自己的無線網狀網路裡,需要一座橋把封包轉到家用網路——這座橋叫 <strong>Thread border router</strong>。我不用另外買:Nest Hub 第 2 代內建了一個。</p>
+<p>完整的封包路徑變成:</p>
+<pre><code>HA 主機 (Ubuntu, fe80::...)
+   │  乙太網路 / WiFi
+   ▼
+Nest Hub 2(Thread border router)
+   │  802.15.4 無線
+   ▼
+IKEA KLIPPBOK 漏水感應器(Thread 網段的 IPv6 位址)</code></pre>
+<p>關鍵在中間那一跳:Thread 網段用的是另一段 IPv6 前綴,HA 主機要知道「去那個網段找 Nest Hub 當閘道」。border router 會透過 <strong>Router Advertisement(RA)</strong>把這條路由廣播到區網,主機收到後自動加進路由表——前提是主機願意收。Linux 這邊有個常見的坑:</p>
+<pre><code># 0 = 不收 RA、1 = 預設、2 = 即使開了 forwarding 也收
+sysctl net.ipv6.conf.enp3s0.accept_ra=2</code></pre>
+<p>裝了 Docker 的主機常因為 IP forwarding 被打開,導致核心預設拒收 RA(值是 1 時,forwarding 開啟就不收)。症狀非常典型:<strong>Thread 裝置配對成功,幾秒後變 unavailable</strong>——因為配對是透過藍牙/border router 代理完成的,但之後的日常通訊需要主機直接 ping 通裝置的 IPv6,路由不在就斷線。把 <code>accept_ra</code> 設成 2 幾乎是每個 Container 派玩家都要補的一刀。</p>
+
+<h2>配對的實際流程(多管理員)</h2>
+<p>我的 IKEA 裝置先用 Google Home app 配對——它們會掛上 Nest Hub 的 Thread 網路。然後在 Google Home 裡對裝置選「已連結的 Matter 應用程式與服務」產生新的配對碼,拿到 HA 的 Matter 整合輸入。這用的是 Matter 的<strong>多管理員(multi-admin)</strong>機制:裝置同時加入 Google 和 HA 兩個 fabric,兩邊都能控制、互不干擾,語音指令照常運作。</p>
+
+<h2>驗證清單</h2>
+<pre><code># 1. 兩個容器都活著
+docker ps            # homeassistant、matter-server 都是 Up
+
+# 2. 5580 有人監聽(IPv4/IPv6 都要在)
+ss -tlnp | grep 5580
+
+# 3. 主機 IPv6 活著
+ip -6 addr show scope link   # 要看到 fe80::
+
+# 4. (配對 Thread 裝置後)能直接 ping 通裝置
+ping -6 &lt;裝置的IPv6位址&gt;</code></pre>
+
+<h2>小結</h2>
+<p>一句話總結這套架構:<strong>HA 出一張嘴,Matter Server 動手,IPv6 是手臂,Nest Hub 是伸進 Thread 世界的義肢。</strong>WebSocket URL 只是 HA 和控制器之間的內部電話線;真正決定 Matter 裝置活不活的,是主機的 IPv6 路由能不能一路通到裝置——除錯時先 ping,再查 <code>accept_ra</code>,九成的問題都在這。</p>
+
+<p><em>本文是「把智慧家庭搬進 Home Assistant」系列的一部分。環境:Ubuntu Server 24.04 + Docker Engine,HA Container 版 + python-matter-server,host network。</em></p>
+
+</article>
+</body>
+</html>
