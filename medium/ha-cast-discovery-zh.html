@@ -35,6 +35,7 @@ _androidtvremote2._tcp.local  → Google TV / Android TV 遙控協定</code></pr
 <li><strong>A / AAAA 記錄</strong>——「我的 IP 是 192.168.1.x」</li>
 <li><strong>TXT 記錄</strong>——附加資訊:裝置型號(<code>md=Google Nest Hub</code>)、好記的名稱(<code>fn=客廳顯示器</code>)、韌體版本等</li>
 </ul>
+<figure><img src="https://quenhenglee.github.io/medium/img/ha-mdns-comic.png" alt="三格漫畫:HA 廣播 mDNS 查詢、裝置舉手回覆四種記錄、HA 建立連線"><figcaption>整個探索流程三格講完:HA 對 224.0.0.251:5353 喊出服務類型 → 聽到的裝置舉手回 PTR/SRV/A/TXT 四種記錄 → HA 拿 IP:8009 建立 Cast 長連線。</figcaption></figure>
 <p>Home Assistant 收到這些回答,比對出「這是 Cast 裝置」,就在介面上跳出探索通知。你按下確認後,它用剛剛拿到的 IP 和 port 8009 建立長連線(Cast 協定 v2,protobuf over TLS),從此可以查詢播放狀態、投放媒體、發 TTS 語音廣播。</p>
 
 <h2>為什麼容器必須用 host network</h2>
