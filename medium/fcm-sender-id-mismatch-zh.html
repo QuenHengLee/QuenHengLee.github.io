@@ -40,6 +40,7 @@ case StatusCode::STATUS_FORBIDDEN:      // 403
 <li><strong>403 + SENDER_ID_MISMATCH</strong>:鑰匙沒問題,只是「這一個 token」不是你們家的。把它移掉就好,其他推播完全不受影響。</li>
 </ul>
 <p>一個要人半夜起床,一個完全不用。但因為 SDK 給的是同一個例外,我們的程式分不出來。</p>
+<figure><img src="https://quenhenglee.github.io/medium/img/fcm-401-403-same-exception.svg" alt="流程圖:401 與 403+SENDER_ID_MISMATCH 兩種不同的錯誤,經過 MessagingApiExceptionConverter 之後都變成同一個 AuthenticationError"><figcaption>畫成圖大概是這樣:兩種嚴重程度完全不同的錯誤,進了 converter 之後變成同一個 <code>AuthenticationError</code>,我們的程式根本分不出該不該半夜叫人。</figcaption></figure>
 
 <h2>先止血:一個我自己都覺得心虛的 workaround</h2>
 <p>好消息是資訊沒有真的不見——例外的訊息裡有 <code>"SenderId mismatch"</code> 這串字,<code>$e-&gt;errors()</code> 裡也有完整的錯誤碼。所以我先在自己的程式裡用字串比對硬分:</p>
