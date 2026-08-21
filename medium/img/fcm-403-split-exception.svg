@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 460" font-family="'PingFang TC','Microsoft JhengHei','Noto Sans TC',sans-serif">
+  <defs>
+    <marker id="arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
+      <path d="M0,0 L8,4.5 L0,9 Z" fill="#555"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="680" height="460" fill="#ffffff"/>
+
+  <text x="340" y="22" text-anchor="middle" font-size="14" font-weight="bold" fill="#222">kreait/firebase-php 的例外轉換（修正後）</text>
+
+  <!-- 401 box -->
+  <rect x="12" y="40" width="216" height="120" rx="8" fill="#fdf0ee" stroke="#c0392b" stroke-width="1.5"/>
+  <text x="24" y="68" font-size="14" font-weight="bold" fill="#c0392b" font-family="ui-monospace,Consolas,monospace">HTTP 401</text>
+  <text x="24" y="92" font-size="12.5" fill="#333">鑰匙（憑證）真的壞了</text>
+  <text x="24" y="114" font-size="12.5" fill="#333">整個服務都發不出去</text>
+  <text x="24" y="140" font-size="12.5" font-weight="bold" fill="#c0392b">→ 要半夜叫人起來修</text>
+
+  <!-- 403 box -->
+  <rect x="12" y="300" width="216" height="120" rx="8" fill="#edf7f3" stroke="#1e8e6e" stroke-width="1.5"/>
+  <text x="24" y="326" font-size="14" font-weight="bold" fill="#1e8e6e" font-family="ui-monospace,Consolas,monospace">HTTP 403</text>
+  <text x="24" y="344" font-size="11.5" fill="#1e8e6e" font-family="ui-monospace,Consolas,monospace">SENDER_ID_MISMATCH</text>
+  <text x="24" y="368" font-size="12.5" fill="#333">鑰匙沒問題，只是這個</text>
+  <text x="24" y="388" font-size="12.5" fill="#333">token 是別人家的</text>
+  <text x="24" y="412" font-size="12.5" font-weight="bold" fill="#1e8e6e">→ 把它移掉就好</text>
+
+  <!-- converter box -->
+  <rect x="280" y="170" width="168" height="120" rx="8" fill="#f4f4f4" stroke="#666" stroke-width="1.5"/>
+  <text x="292" y="196" font-size="13" font-weight="bold" fill="#222" font-family="ui-monospace,Consolas,monospace">MessagingApi</text>
+  <text x="292" y="213" font-size="13" font-weight="bold" fill="#222" font-family="ui-monospace,Consolas,monospace">ExceptionConverter</text>
+  <line x1="292" y1="224" x2="436" y2="224" stroke="#bbb" stroke-width="1"/>
+  <text x="292" y="245" font-size="12" fill="#444" font-family="ui-monospace,Consolas,monospace">case 403:</text>
+  <text x="292" y="263" font-size="11" fill="#444" font-family="ui-monospace,Consolas,monospace">isSenderIdMismatch()?</text>
+  <text x="292" y="282" font-size="12" fill="#666">→ 分成兩條路</text>
+
+  <!-- AuthenticationError box -->
+  <rect x="496" y="64" width="176" height="110" rx="8" fill="#fff8e1" stroke="#b7950b" stroke-width="1.5"/>
+  <text x="584" y="92" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#7d6608" font-family="ui-monospace,Consolas,monospace">AuthenticationError</text>
+  <text x="584" y="112" text-anchor="middle" font-size="11" fill="#7d6608" font-family="ui-monospace,Consolas,monospace">(401、其他 403)</text>
+  <text x="584" y="136" text-anchor="middle" font-size="12.5" fill="#333">憑證真的有問題</text>
+  <text x="584" y="158" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#c0392b">→ 告警，叫人來修</text>
+
+  <!-- SenderIdMismatch box -->
+  <rect x="496" y="290" width="176" height="110" rx="8" fill="#edf7f3" stroke="#1e8e6e" stroke-width="1.5"/>
+  <text x="584" y="318" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#1e8e6e" font-family="ui-monospace,Consolas,monospace">SenderIdMismatch</text>
+  <text x="584" y="338" text-anchor="middle" font-size="10.5" fill="#1e8e6e" font-family="ui-monospace,Consolas,monospace">(403 + SENDER_ID_MISMATCH)</text>
+  <text x="584" y="362" text-anchor="middle" font-size="12.5" fill="#333">token 是別人家的</text>
+  <text x="584" y="384" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#1e8e6e">→ 把它移掉就好</text>
+
+  <!-- note box -->
+  <rect x="280" y="330" width="168" height="80" rx="8" fill="#ffffff" stroke="#999" stroke-width="1.2" stroke-dasharray="5,4"/>
+  <text x="364" y="362" text-anchor="middle" font-size="12" fill="#555">以後 catch 型別就好，</text>
+  <text x="364" y="384" text-anchor="middle" font-size="12" fill="#555">不用再猜字串</text>
+
+  <!-- arrows -->
+  <line x1="228" y1="100" x2="274" y2="208" stroke="#555" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="228" y1="360" x2="274" y2="252" stroke="#555" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="448" y1="205" x2="490" y2="125" stroke="#555" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="448" y1="255" x2="490" y2="335" stroke="#555" stroke-width="1.5" marker-end="url(#arrow)"/>
+</svg>

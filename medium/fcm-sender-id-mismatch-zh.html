@@ -79,6 +79,7 @@ case StatusCode::STATUS_FORBIDDEN:      // 403
 } catch (AuthenticationError $e) {
     // 憑證真的有問題:告警
 }</code></pre>
+<figure><img src="https://quenhenglee.github.io/medium/img/fcm-403-split-exception.svg" alt="流程圖:修正後,403+SENDER_ID_MISMATCH 轉成新的 SenderIdMismatch 例外,其他 401/403 維持 AuthenticationError"><figcaption>修正後的樣子:converter 在 403 這裡多判斷一次,兩種問題終於各自有各自的例外,該移除的移除、該告警的告警。</figcaption></figure>
 <p>因為其他 401/403 的行為完全沒變,舊的程式碼不會被影響。我補了三個單元測試、一段文件和 CHANGELOG,然後把專案的檢查全部跑過一輪:361 個單元測試全綠、PHPStan(靜態分析)零錯誤、程式碼風格檢查也都過。跑完那一刻真的滿有成就感的。</p>
 
 <h2>人生第一次開源貢獻,學到的兩課</h2>
